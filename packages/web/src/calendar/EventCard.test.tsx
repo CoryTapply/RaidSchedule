@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import type { RaidEvent } from '@raidschedule/shared';
-import { EventCard } from './EventCard.js';
+import { EventCard, isHordeTitle } from './EventCard.js';
 
 function makeEvent(overrides: Partial<RaidEvent> = {}): RaidEvent {
   return {
@@ -46,5 +46,23 @@ describe('EventCard', () => {
     screen.getByRole('button').focus();
     await userEvent.keyboard('{Enter}');
     expect(onSelect).toHaveBeenCalledWith(event);
+  });
+
+  describe('isHordeTitle', () => {
+    it('matches "horde" case-insensitively anywhere in the title', () => {
+      expect(isHordeTitle('Thursday Horde Run')).toBe(true);
+      expect(isHordeTitle('HORDE NAXX GDKP')).toBe(true);
+      expect(isHordeTitle('friday horde gdkp')).toBe(true);
+      expect(isHordeTitle('Wed Ally Run')).toBe(false);
+      expect(isHordeTitle('Nerub-ar Palace')).toBe(false);
+    });
+  });
+
+  it('shows a Horde badge when the title contains "horde", and hides it otherwise', () => {
+    const { rerender } = render(<EventCard event={makeEvent({ raidName: 'Thursday Horde Run' })} onSelect={vi.fn()} />);
+    expect(screen.getByLabelText('Horde')).toBeInTheDocument();
+
+    rerender(<EventCard event={makeEvent({ raidName: 'Wed Ally Run' })} onSelect={vi.fn()} />);
+    expect(screen.queryByLabelText('Horde')).not.toBeInTheDocument();
   });
 });

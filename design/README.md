@@ -2,7 +2,7 @@
 
 ## Overview
 
-A calendar view for tracking World of Warcraft raid signups across multiple characters. It shows a fixed rolling three-week window (Sunday → Saturday, 21 days), with raid events color-coded by the class of the character signed up. Two signup states are visually distinct: *signed up* (pending) and *roster confirmed*. The current raid lockout week (Tuesday → Monday) is highlighted, and hovering any day moves that highlight to the lockout week the hovered day belongs to.
+A calendar view for tracking World of Warcraft raid signups across multiple characters. It shows a fixed rolling three-week window (Sunday → Saturday, 21 days), with raid events color-coded by the class of the character signed up. Two signup states are visually distinct: *signed up* (pending) and *roster confirmed*. The current raid lockout week (Tuesday → Monday) is highlighted, and hovering any day moves that highlight to the lockout week the hovered day belongs to. Right-clicking a day opens a create-event popup at the cursor (one-time events only for now).
 
 ## About the Design Files
 
@@ -38,6 +38,8 @@ The HTML files use a small custom template runtime (`support.js`) that is not pa
 *Event card* — `border-radius: var(--radius-sm)`, `padding: 6px 8px`, flex column `gap: 2px`, `min-width: 0`, `cursor: pointer`. Two variants, below. Contents:
 - Row 1: class badge (16×16, `border-radius: 4px`, 9px/600, centered, first letter of class name) + raid name (11.5px/500, single line, `text-overflow: ellipsis`).
 - Row 2: `8:00 PM · Windrunner` — 11px/400, `--color-neutral-300`, `padding-left: 22px` to align under the raid name, ellipsis-truncated.
+
+*Create-event popup* — see the dedicated section below.
 
 *Event detail dialog* — fixed full-screen backdrop `rgba(0,0,0,0.5)`, centered panel: width 340, background `--color-neutral-800`, 1px `--color-neutral-700`, `border-radius: var(--radius-lg)`, `box-shadow: var(--shadow-lg)`, `padding: var(--space-5)`, flex column `gap: var(--space-4)`. Contains raid name (16px/500 heading), `August 18, 2026 · 8:00 PM` (12px/400 muted), a card-styled character block matching the event's own border/background treatment (28×28 badge, character · class at 13px/500, status label at 12px muted), a `Difficulty: Heroic` line, and a 28×28 `×` close button.
 
@@ -93,6 +95,34 @@ border-top: 2px solid var(--color-accent-500);   /* vs 1px solid var(--color-neu
 ```
 Non-highlighted cells: `background: var(--color-neutral-900)`. (The accent mix here is intentionally OKLCH — it is a single fixed accent tint, not a per-class hue.)
 
+## Create-event popup (`Raid Calendar.dc.html`)
+
+**Trigger:** `contextmenu` on a day cell. Suppress the native browser menu (`preventDefault`) and stop propagation. The popup opens anchored to the cursor and closes any open detail dialog.
+
+**Positioning:** `position: fixed` inside a full-screen `inset: 0` overlay at `z-index: 60` (transparent — it exists only to catch outside clicks). Panel `left = clamp(8, clientX, viewportWidth − 320)`, `top = clamp(8, clientY, viewportHeight − 500)`, so it never runs off-screen near the right or bottom edge.
+
+**Panel:** width 312, background `--color-neutral-800`, 1px `--color-neutral-700`, `border-radius: var(--radius-lg)`, `box-shadow: var(--shadow-lg)`, flex column. Three bands separated by 1px `--color-neutral-700` rules:
+
+1. *Header* — `padding: var(--space-3) var(--space-4)`. Title `New event` (13.5px/500 heading font) over the full date of the clicked day, `Tue, August 18, 2026` (11.5px/400, `--color-neutral-300`). Right: 24×24 `×` button, `border-radius: var(--radius-sm)`, 1px `--color-neutral-700`, transparent; hover background `--color-neutral-700`, color `--color-text`.
+2. *Body* — `padding: var(--space-4)`, flex column `gap: var(--space-3)`. Fields in order: **Title** (full width, autofocused, placeholder `Nerub-ar Palace`), **Start** / **End** side by side (`grid-template-columns: 1fr 1fr`, `gap: var(--space-3)`, native `time` inputs), **Character** (8×8 class-color chip, `border-radius: 2px`, then the text input; placeholder `Character name`), **Class** (13 options in a 2-column grid, `gap: 4px`). Closing line: a 5px `--color-neutral-600` dot + `One-time event` (11px/400, `--color-neutral-400`).
+3. *Footer* — `padding: var(--space-3) var(--space-4)`, right-aligned, `gap: var(--space-2)`. **Cancel**: height 30, `padding: 0 var(--space-3)`, `border-radius: var(--radius-sm)`, 1px `--color-neutral-700`, transparent, 12px/500 `--color-neutral-200`; hover background `--color-neutral-700`. **Add event**: height 30, `padding: 0 var(--space-4)`, 1px `--color-accent-600`; enabled = background `--color-accent-800`, `--color-text`; disabled = transparent, `--color-neutral-400`, `opacity: 0.5`, `cursor: not-allowed`. Hover (enabled) background `--color-accent-800`.
+
+**Field style** (all inputs): `height: 32px`, `padding: 0 8px`, `border-radius: var(--radius-sm)`, 1px `--color-neutral-700`, background `--color-neutral-900`, 12.5px/400 `--color-text`, `color-scheme: dark` (so native time pickers render dark), placeholder `--color-neutral-500`, `box-sizing: border-box`. Focus: `outline: 2px solid var(--color-accent); outline-offset: 1px`. Labels above each field: 10.5px/500, uppercase, `letter-spacing: 0.05em`, `--color-neutral-400`, 5px gap.
+
+**Class picker option:** `padding: 5px 7px`, `border-radius: var(--radius-sm)`, 11px/500, left-aligned, an 8×8 color chip + the class name (ellipsis-truncated). Unselected: 1px `--color-neutral-700`, background `--color-neutral-900`, text `--color-neutral-300`. Selected: `1px solid $color`, background `color-mix(in srgb, $color 22%, var(--color-neutral-900))`, text `--color-text`. Single-select; default `Druid` (in production, default to the user's main character's class).
+
+**Behavior**
+- Defaults on open: empty title, `20:00` start, `23:00` end, empty character, `Druid`.
+- **Add event** is disabled until the title is non-empty (trimmed). Title is the only required field; an empty character name saves as `—`. No other validation — end-before-start is not currently blocked; add that check if the app needs it.
+- Saving appends the event to the clicked day and closes the popup. New events render in the *roster confirmed* treatment and open in the detail dialog like seeded ones (difficulty `Not set`, status label `One-time event`, time shown as `8:00 PM – 11:00 PM`).
+- Dismissal: **Cancel**, the `×`, `Escape`, a click on the overlay outside the panel, or a right-click anywhere outside (which also suppresses the native menu). Clicks inside the panel must not bubble to the overlay.
+- `Escape` closes the popup if it is open, otherwise the detail dialog.
+- Times are stored as 24-hour `HH:MM` and displayed 12-hour with `AM`/`PM`.
+
+**Recurring events:** out of scope for now, but planned. The `One-time event` line in the body is the placeholder for that control — expect it to become a recurrence selector (e.g. *Does not repeat / Weekly on Tuesday / Custom*). Model the event record so a recurrence rule can be added without reshaping it (a nullable `recurrence` field on a single event row rather than exploding instances at create time).
+
+The 4K view does not yet include this popup; scale the same panel proportionally if it is needed there.
+
 ## Interactions & Behavior
 
 - **Prev / next** — shift the 21-day window by exactly 7 days (one week), not three. The window always starts on a Sunday.
@@ -104,7 +134,7 @@ Non-highlighted cells: `background: var(--color-neutral-900)`. (The accent mix h
 - No transitions or animations are specified. Hover feedback is an immediate background change.
 - Keyboard focus: per the design system, `:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }` — never the browser default.
 
-**Not yet designed** (raise before building if needed): overflow when a day has more events than fit its 260px row, event creation/editing, month or agenda views, mobile breakpoint, and the roster list inside the detail dialog (only the viewer's own character is shown today).
+**Not yet designed** (raise before building if needed): overflow when a day has more events than fit its 260px row, editing or deleting an existing event, recurring events (see the popup section), month or agenda views, mobile breakpoint, and the roster list inside the detail dialog (only the viewer's own character is shown today).
 
 ## State Management
 
@@ -113,6 +143,8 @@ Three pieces of state:
 | State | Type | Purpose |
 | --- | --- | --- |
 | `anchor` | Date (a Sunday, midnight-normalized) | first day of the 21-day window |
+| `composer` | object \| null | the open create-event popup: `{ key, dateLabel, x, y, title, start, end, character, cls }`; `null` = closed |
+| `custom` | array | events created in-session: `{ key, dateLabel, title, start, end, character, cls }` — replace with a real create mutation |
 | `selectedEvent` | Event \| null | which event the dialog shows; `null` = closed |
 | `hoverLockoutKey` | string \| null | date key of the hovered day's lockout-week start; `null` = fall back to the current week |
 
@@ -176,7 +208,7 @@ No images or icons. Class identity is carried by color plus a single-letter badg
 
 | File | What it is |
 | --- | --- |
-| `Raid Calendar.dc.html` | standard desktop view (max 1600×1100) |
+| `Raid Calendar.dc.html` | standard desktop view (max 1600×1100), including the create-event popup |
 | `Raid Calendar 4K.dc.html` | 4K / 125%-scaling view (3072×1728 canvas) |
 | `Class Colors.dc.html` | all 13 class colors × both event states |
 | `_ds/nocturne-…/styles.css` | Nocturne token sheet + component layer — the source of every `var(--*)` above |

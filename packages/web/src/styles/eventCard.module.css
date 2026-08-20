@@ -1,4 +1,5 @@
 .card {
+  position: relative;
   cursor: pointer;
   border-radius: var(--card-radius);
   padding: var(--card-pad-y) var(--card-pad-x);
@@ -30,6 +31,30 @@
   border: var(--confirmed-border-width) solid var(--class-color);
   background: color-mix(in srgb, var(--class-color) 30%, var(--color-neutral-800));
   color: var(--color-text);
+}
+
+/*
+ * A small badge inset inside the top-right corner for raids whose title
+ * mentions "Horde", showing the Horde crest.
+ */
+.hordeBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--color-neutral-900);
+  border: 1px solid #e5484d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hordeBadgeIcon {
+  width: 10px;
+  height: 10px;
 }
 
 .topRow {

@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { RaidEvent } from '@raidschedule/shared';
+import hordeIcon from '../assets/horde-icon.svg';
 import { classColor } from './classColors.js';
 import { timeLabel } from './format.js';
 import styles from '../styles/eventCard.module.css';
@@ -9,12 +10,17 @@ export interface EventCardProps {
   onSelect: (event: RaidEvent) => void;
 }
 
+export function isHordeTitle(raidName: string): boolean {
+  return /horde/i.test(raidName);
+}
+
 export function EventCard({ event, onSelect }: EventCardProps) {
   const color = classColor(event.character.className);
   const isConfirmed = event.status === 'confirmed';
   const variantClass = isConfirmed ? styles.confirmed : styles.pending;
   const badgeColorClass = isConfirmed ? styles.badgeColorConfirmed : styles.badgeColorPending;
   const initial = event.character.className === 'Unknown' ? '?' : event.character.className[0];
+  const isHorde = isHordeTitle(event.raidName);
 
   return (
     <div
@@ -30,6 +36,11 @@ export function EventCard({ event, onSelect }: EventCardProps) {
         }
       }}
     >
+      {isHorde && (
+        <span className={styles.hordeBadge} title="Horde" aria-label="Horde">
+          <img src={hordeIcon} alt="" className={styles.hordeBadgeIcon} />
+        </span>
+      )}
       <div className={styles.topRow}>
         <span className={`${styles.badge} ${badgeColorClass}`}>{initial}</span>
         <span className={styles.raidName}>{event.raidName}</span>
