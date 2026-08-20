@@ -17,7 +17,7 @@ export function DayCell({ day, showAnnotation, onSelectEvent, onEnter, onLeave }
 
   return (
     <div
-      className={`${styles.dayCell} ${day.isHighlighted ? styles.dayCellHighlighted : ''}`}
+      className={`${styles.dayCell} ${day.isHighlighted ? styles.dayCellHighlighted : ''} ${day.isToday ? styles.dayCellToday : ''}`}
       onMouseEnter={() => onEnter(day.lockoutWeekKey)}
       onMouseLeave={onLeave}
     >

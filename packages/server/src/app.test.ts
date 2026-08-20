@@ -5,11 +5,37 @@ import { buildApp } from './app.js';
 const APP_PASSWORD = 'correct-horse-battery-staple';
 const SESSION_SECRET = 'a'.repeat(32);
 
-async function makeApp(): Promise<FastifyInstance> {
+interface RawEventOverrides {
+  id: string;
+  startTime: number;
+  characterName: string;
+}
+
+function rawEvent({ id, startTime, characterName }: RawEventOverrides) {
+  return {
+    id,
+    channelId: 'chan1',
+    leaderId: 'lead1',
+    leaderName: 'Leader',
+    title: 'Nerub-ar Palace',
+    description: '',
+    startTime,
+    endTime: startTime + 3600,
+    closeTime: startTime - 3600,
+    templateId: 'tmpl1',
+    color: '000000',
+    lastUpdated: startTime,
+    signUps: [
+      { name: characterName, id: 1, userId: 'u1', className: 'Druid', specName: 'Balance', entryTime: 0 },
+    ],
+  };
+}
+
+async function makeApp(raidHelperApiKey = 'unused-in-these-tests'): Promise<FastifyInstance> {
   return buildApp({
     appPassword: APP_PASSWORD,
     sessionSecret: SESSION_SECRET,
-    raidHelperApiKey: 'unused-in-these-tests',
+    raidHelperApiKey,
     logger: false,
   });
 }
@@ -67,9 +93,13 @@ describe('auth routes', () => {
 
 describe('GET /api/events', () => {
   let app: FastifyInstance;
+  let testCounter = 0;
 
   beforeEach(async () => {
-    app = await makeApp();
+    // fetchRaidHelperEvents caches by API key for 60s; give each test its own key so
+    // they don't read back another test's stubbed response.
+    testCounter += 1;
+    app = await makeApp(`test-key-${testCounter}`);
   });
 
   afterEach(async () => {
@@ -77,52 +107,57 @@ describe('GET /api/events', () => {
     vi.unstubAllGlobals();
   });
 
+  async function loginAndFetchEvents(app: FastifyInstance) {
+    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
+    const cookie = login.cookies.find((c) => c.name === 'raidschedule_session')!;
+    return app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie.value } });
+  }
+
   it('requires authentication', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/events' });
     expect(res.statusCode).toBe(401);
   });
 
   it('returns normalized events for an authenticated request', async () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify([rawEvent({ id: 'evt1', startTime: nowSeconds + 3600, characterName: 'Thrashclaw' })]),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    const res = await loginAndFetchEvents(app);
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.events).toHaveLength(1);
+    expect(body.events[0].status).toBe('confirmed');
+    expect(body.events[0].character.name).toBe('Thrashclaw');
+  });
+
+  it('excludes events older than the 60-day lookback window, keeps recent and future ones', async () => {
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    const DAY = 86_400;
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>
         new Response(
           JSON.stringify([
-            {
-              id: 'evt1',
-              channelId: 'chan1',
-              leaderId: 'lead1',
-              leaderName: 'Leader',
-              title: 'Nerub-ar Palace',
-              description: '',
-              startTime: 1755640800,
-              endTime: 1755651600,
-              closeTime: 1755637200,
-              templateId: 'tmpl1',
-              color: '000000',
-              lastUpdated: 1755600000,
-              signUps: [
-                { name: 'Thrashclaw', id: 1, userId: 'u1', className: 'Druid', specName: 'Balance', entryTime: 0 },
-              ],
-            },
+            rawEvent({ id: 'too-old', startTime: nowSeconds - 61 * DAY, characterName: 'TooOld' }),
+            rawEvent({ id: 'within-window', startTime: nowSeconds - 59 * DAY, characterName: 'WithinWindow' }),
+            rawEvent({ id: 'future', startTime: nowSeconds + 30 * DAY, characterName: 'Future' }),
           ]),
           { status: 200 },
         ),
       ),
     );
 
-    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
-    const cookie = login.cookies.find((c) => c.name === 'raidschedule_session')!;
-
-    const res = await app.inject({
-      method: 'GET',
-      url: '/api/events',
-      cookies: { raidschedule_session: cookie.value },
-    });
+    const res = await loginAndFetchEvents(app);
     expect(res.statusCode).toBe(200);
-    const body = res.json();
-    expect(body.events).toHaveLength(1);
-    expect(body.events[0].status).toBe('confirmed');
-    expect(body.events[0].character.name).toBe('Thrashclaw');
+    const names = res.json().events.map((e: { character: { name: string } }) => e.character.name);
+    expect(names).toEqual(['WithinWindow', 'Future']);
   });
 });
