@@ -1,0 +1,51 @@
+[
+  {
+    "id": "1234567890123456789",
+    "channelId": "9876543210987654321",
+    "leaderId": "1111111111111111111",
+    "leaderName": "Raidleader",
+    "title": "Nerub-ar Palace",
+    "description": "Weekly heroic clear",
+    "startTime": 1755640800,
+    "endTime": 1755651600,
+    "closeTime": 1755637200,
+    "templateId": "template-1",
+    "color": "1a1a2e",
+    "lastUpdated": 1755600000,
+    "signUpCount": "4",
+    "signUps": [
+      {
+        "name": "Thrashclaw",
+        "id": 1,
+        "userId": "2222222222222222222",
+        "className": "Druid",
+        "specName": "Balance",
+        "entryTime": 1755500000
+      },
+      {
+        "name": "Ironhide",
+        "id": 2,
+        "userId": "3333333333333333333",
+        "className": "Tank",
+        "specName": "Protection",
+        "entryTime": 1755500000
+      },
+      {
+        "name": "Windrunner",
+        "id": 3,
+        "userId": "4444444444444444444",
+        "className": "Absence",
+        "specName": "Absence",
+        "entryTime": 1755500000
+      },
+      {
+        "name": "Stormcaller",
+        "id": 4,
+        "userId": "5555555555555555555",
+        "className": "Tentative",
+        "specName": "Elemental",
+        "entryTime": 1755500000
+      }
+    ]
+  }
+]

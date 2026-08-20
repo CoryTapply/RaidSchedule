@@ -1,0 +1,15 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.claude/
+.env
+.env.local
+*.local
+.DS_Store
+prompt/
+*.db
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+coverage/

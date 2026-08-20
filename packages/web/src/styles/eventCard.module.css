@@ -1,0 +1,117 @@
+.card {
+  cursor: pointer;
+  border-radius: var(--card-radius);
+  padding: var(--card-pad-y) var(--card-pad-x);
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--card-gap);
+}
+
+/*
+ * The two color-mix() formulas below are pinned to sRGB as static CSS —
+ * per the design doc, mixing "in oklch" here drags every fill toward the
+ * neutral's own hue (an orange Druid card renders purple). Only the raw
+ * class hex (--class-color) varies per card, via inline style.
+ */
+.pending {
+  border: 1px solid color-mix(in srgb, var(--class-color) 60%, transparent);
+  background:
+    repeating-linear-gradient(
+      45deg,
+      color-mix(in srgb, var(--class-color) 26%, transparent) 0 5px,
+      transparent 5px 10px
+    ),
+    var(--color-neutral-800);
+  color: var(--color-neutral-100);
+}
+
+.confirmed {
+  border: var(--confirmed-border-width) solid var(--class-color);
+  background: color-mix(in srgb, var(--class-color) 30%, var(--color-neutral-800));
+  color: var(--color-text);
+}
+
+.topRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.badge {
+  width: var(--badge-size);
+  height: var(--badge-size);
+  border-radius: var(--badge-radius);
+  font: 600 var(--badge-font) var(--font-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/*
+ * Color-only (no sizing) so these compose safely with a differently-sized
+ * .badge class from another module (e.g. the dialog's larger badge) without
+ * a specificity conflict over width/height/border-radius.
+ */
+.badgeColorPending {
+  background: color-mix(in srgb, var(--class-color) 45%, var(--color-neutral-800));
+  color: var(--class-color);
+}
+
+.badgeColorConfirmed {
+  background: var(--class-color);
+  color: #161826;
+}
+
+.raidName {
+  font: 500 var(--raidname-size) var(--font-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaRow {
+  font: 400 var(--meta-size) var(--font-body);
+  color: var(--color-neutral-300);
+  padding-left: calc(var(--badge-size) + 6px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metaDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--color-neutral-500);
+  flex-shrink: 0;
+}
+
+.statusRow {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding-left: calc(var(--badge-size) + 6px);
+}
+
+.statusLabel {
+  font: 500 var(--meta-size) var(--font-body);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+}
+
+.confirmed .statusLabel {
+  color: var(--class-color);
+}
+
+@container calendar (min-width: 1900px) {
+  .statusRow {
+    display: flex;
+  }
+}

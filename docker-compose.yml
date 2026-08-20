@@ -1,0 +1,13 @@
+services:
+  raidschedule:
+    build: .
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env
+    volumes:
+      - raidschedule-data:/data
+    restart: unless-stopped
+
+volumes:
+  raidschedule-data:

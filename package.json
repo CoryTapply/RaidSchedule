@@ -1,0 +1,26 @@
+{
+  "name": "raidschedule",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "dotenv -e .env -- concurrently -k -n server,web -c blue,green \"npm run dev -w @raidschedule/server\" \"npm run dev -w @raidschedule/web\"",
+    "dev:coi": "dotenv -e .env -- concurrently -k -n server,web -c blue,green \"npm run dev -w @raidschedule/server\" \"npm run dev:coi -w @raidschedule/web\"",
+    "build": "npm run build -w @raidschedule/shared && npm run build -w @raidschedule/web && npm run build -w @raidschedule/server",
+    "lint": "eslint .",
+    "test": "npm run test -ws --if-present",
+    "typecheck": "npm run build -w @raidschedule/shared && tsc -b packages/server/tsconfig.json && tsc -b packages/web/tsconfig.json"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^10.0.5",
+    "dotenv-cli": "^11.0.0",
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.11.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.67.0"
+  }
+}
