@@ -9,9 +9,10 @@ export interface DayGridProps {
   onSelectEvent: (event: RaidEvent) => void;
   onEnterDay: (lockoutWeekKey: string) => void;
   onLeaveDay: () => void;
+  onOpenComposer: (day: CalendarDay, e: { clientX: number; clientY: number }) => void;
 }
 
-export function DayGrid({ days, showAnnotations, onSelectEvent, onEnterDay, onLeaveDay }: DayGridProps) {
+export function DayGrid({ days, showAnnotations, onSelectEvent, onEnterDay, onLeaveDay, onOpenComposer }: DayGridProps) {
   return (
     <div className={styles.dayGrid}>
       {days.map((day) => (
@@ -22,6 +23,7 @@ export function DayGrid({ days, showAnnotations, onSelectEvent, onEnterDay, onLe
           onSelectEvent={onSelectEvent}
           onEnter={onEnterDay}
           onLeave={onLeaveDay}
+          onOpenComposer={onOpenComposer}
         />
       ))}
     </div>

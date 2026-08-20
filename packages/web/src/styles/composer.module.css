@@ -1,0 +1,243 @@
+/*
+ * Fixed px values, not clamp() vars — the design doc only documents one
+ * endpoint (standard) for this popup ("The 4K view does not yet include
+ * this popup... scale the same panel proportionally if it is needed
+ * there"). Don't invent a second endpoint/coefficient; convert to
+ * --composer-* clamp() vars in calendar.module.css only once a real 4K
+ * spec for this panel exists.
+ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+
+.panel {
+  position: absolute;
+  width: 312px;
+  background: var(--color-neutral-800);
+  border: 1px solid var(--color-neutral-700);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: 1px solid var(--color-neutral-700);
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.headerTitle {
+  font: 500 13.5px var(--font-heading);
+  color: var(--color-text);
+}
+
+.headerDate {
+  font: 400 11.5px var(--font-body);
+  color: var(--color-neutral-300);
+}
+
+.closeButton {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-700);
+  background: transparent;
+  color: var(--color-neutral-300);
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.closeButton:hover {
+  background: var(--color-neutral-700);
+  color: var(--color-text);
+}
+
+.body {
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.label {
+  font: 500 10.5px var(--font-body);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-neutral-400);
+}
+
+.input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-700);
+  background: var(--color-neutral-900);
+  color: var(--color-text);
+  font: 400 12.5px var(--font-body);
+  color-scheme: dark;
+  outline: none;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.input::placeholder {
+  color: var(--color-neutral-500);
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.characterRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chip {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background: var(--class-color);
+}
+
+.classGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.classOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-700);
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-300);
+  font: 500 11px var(--font-body);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+}
+
+/*
+ * Selected state mixes the class color in sRGB, not oklch — same rule as
+ * eventCard.module.css: mixing "in oklch" drags the fill toward the
+ * neutral's own hue and turns every color mauve.
+ */
+.classOptionSelected {
+  border: 1px solid var(--class-color);
+  background: color-mix(in srgb, var(--class-color) 22%, var(--color-neutral-900));
+  color: var(--color-text);
+}
+
+.classChip {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background: var(--class-color);
+}
+
+.className {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recurrenceRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 400 11px var(--font-body);
+  color: var(--color-neutral-400);
+}
+
+.recurrenceDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-neutral-600);
+  flex-shrink: 0;
+}
+
+.footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-neutral-700);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.cancelButton {
+  height: 30px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-700);
+  background: transparent;
+  color: var(--color-neutral-200);
+  font: 500 12px var(--font-body);
+  cursor: pointer;
+}
+
+.cancelButton:hover {
+  background: var(--color-neutral-700);
+  color: var(--color-text);
+}
+
+.saveButton {
+  height: 30px;
+  padding: 0 var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-accent-600);
+  background: var(--color-accent-800);
+  color: var(--color-text);
+  font: 500 12px var(--font-body);
+  cursor: pointer;
+}
+
+.saveButton:hover {
+  background: var(--color-accent-800);
+}
+
+.saveButtonDisabled {
+  background: transparent;
+  color: var(--color-neutral-400);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.saveButtonDisabled:hover {
+  background: transparent;
+}

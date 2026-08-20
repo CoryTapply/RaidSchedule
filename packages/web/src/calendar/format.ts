@@ -36,3 +36,8 @@ export function dateLabel(iso: string): string {
 export function rangeLabel(start: Date, end: Date): string {
   return `${MONTH_NAMES[start.getMonth()]} ${start.getDate()} – ${MONTH_NAMES[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
 }
+
+/** "Tue, August 18, 2026" — header date line for the create-event popup. */
+export function composerDateLabel(date: Date): string {
+  return `${WEEKDAY_SHORT[date.getDay()]}, ${MONTH_NAMES[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
+}

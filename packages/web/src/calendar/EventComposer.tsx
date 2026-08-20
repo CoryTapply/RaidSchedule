@@ -1,0 +1,139 @@
+import type { CSSProperties } from 'react';
+import { X } from '@phosphor-icons/react';
+import { WOW_CLASSES, type WowClass } from '@raidschedule/shared';
+import { classColor } from './classColors.js';
+import type { ComposerState } from './composer.js';
+import styles from '../styles/composer.module.css';
+
+export interface EventComposerProps {
+  composer: ComposerState;
+  onChange: (patch: Partial<ComposerState>) => void;
+  onCancel: () => void;
+  onSave: () => void;
+}
+
+export function EventComposer({ composer, onChange, onCancel, onSave }: EventComposerProps) {
+  const canSave = composer.title.trim().length > 0;
+  const characterColor = classColor(composer.cls);
+
+  return (
+    <div
+      className={styles.overlay}
+      onClick={onCancel}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        onCancel();
+      }}
+    >
+      <div
+        className={styles.panel}
+        style={{ left: composer.x, top: composer.y }}
+        onClick={(e) => e.stopPropagation()}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+      >
+        <div className={styles.header}>
+          <div className={styles.headerText}>
+            <span className={styles.headerTitle}>New event</span>
+            <span className={styles.headerDate}>{composer.dateLabel}</span>
+          </div>
+          <button type="button" className={styles.closeButton} onClick={onCancel} aria-label="Close">
+            <X weight="bold" />
+          </button>
+        </div>
+
+        <div className={styles.body}>
+          <div className={styles.field}>
+            <span className={styles.label}>Title</span>
+            <input
+              className={styles.input}
+              type="text"
+              placeholder="Black Temple"
+              value={composer.title}
+              onChange={(e) => onChange({ title: e.target.value })}
+              autoFocus
+            />
+          </div>
+
+          <div className={styles.timeRow}>
+            <div className={styles.field}>
+              <span className={styles.label}>Start</span>
+              <input
+                className={styles.input}
+                type="time"
+                value={composer.start}
+                onChange={(e) => onChange({ start: e.target.value })}
+              />
+            </div>
+            <div className={styles.field}>
+              <span className={styles.label}>End</span>
+              <input
+                className={styles.input}
+                type="time"
+                value={composer.end}
+                onChange={(e) => onChange({ end: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <span className={styles.label}>Character</span>
+            <div className={styles.characterRow}>
+              <span className={styles.chip} style={{ '--class-color': characterColor } as CSSProperties} />
+              <input
+                className={styles.input}
+                type="text"
+                placeholder="Character name"
+                value={composer.character}
+                onChange={(e) => onChange({ character: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className={styles.field}>
+            <span className={styles.label}>Class</span>
+            <div className={styles.classGrid}>
+              {WOW_CLASSES.map((cls: WowClass) => {
+                const selected = cls === composer.cls;
+                return (
+                  <button
+                    key={cls}
+                    type="button"
+                    className={`${styles.classOption} ${selected ? styles.classOptionSelected : ''}`}
+                    style={{ '--class-color': classColor(cls) } as CSSProperties}
+                    onClick={() => onChange({ cls })}
+                    aria-pressed={selected}
+                  >
+                    <span className={styles.classChip} />
+                    <span className={styles.className}>{cls}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={styles.recurrenceRow}>
+            <span className={styles.recurrenceDot} />
+            <span>One-time event</span>
+          </div>
+        </div>
+
+        <div className={styles.footer}>
+          <button type="button" className={styles.cancelButton} onClick={onCancel}>
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={`${styles.saveButton} ${canSave ? '' : styles.saveButtonDisabled}`}
+            onClick={onSave}
+            disabled={!canSave}
+          >
+            Add event
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}

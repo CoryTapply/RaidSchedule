@@ -2,6 +2,7 @@ import { useEvents } from '../api/useEvents.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { CalendarHeader } from './CalendarHeader.js';
 import { DayGrid } from './DayGrid.js';
+import { EventComposer } from './EventComposer.js';
 import { EventDetailDialog } from './EventDetailDialog.js';
 import { useCalendarState } from './useCalendarState.js';
 import { useContainerBreakpoint } from './useContainerBreakpoint.js';
@@ -41,10 +42,19 @@ export function CalendarPage() {
             onSelectEvent={state.selectEvent}
             onEnterDay={state.setHoverWeek}
             onLeaveDay={state.clearHoverWeek}
+            onOpenComposer={state.openComposer}
           />
         </>
       )}
       {state.selectedEvent && <EventDetailDialog event={state.selectedEvent} onClose={state.closeDialog} />}
+      {state.composer && (
+        <EventComposer
+          composer={state.composer}
+          onChange={state.updateComposer}
+          onCancel={state.closeComposer}
+          onSave={state.saveComposer}
+        />
+      )}
       <button
         type="button"
         onClick={() => void logout()}
