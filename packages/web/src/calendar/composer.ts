@@ -1,4 +1,4 @@
-import { WOW_CLASSES, type WowClass } from '@raidschedule/shared';
+import { WOW_CLASSES, type RosterStatus, type WowClass } from '@raidschedule/shared';
 
 export interface ComposerState {
   /** date key of the clicked day, e.g. "2026-08-18" */
@@ -14,13 +14,9 @@ export interface ComposerState {
   end: string;
   character: string;
   cls: WowClass;
-}
-
-let counter = 0;
-
-export function makeCustomEventId(): string {
-  counter += 1;
-  return `custom:${Date.now().toString(36)}-${counter}-${Math.random().toString(36).slice(2, 8)}`;
+  status: RosterStatus;
+  saving: boolean;
+  saveError: string | null;
 }
 
 /** Combines a local YYYY-MM-DD date key with a local "HH:MM" time into an ISO UTC string. */

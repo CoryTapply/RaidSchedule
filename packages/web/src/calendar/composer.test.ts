@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getStoredClass, localDateTimeToIso, makeCustomEventId, setStoredClass } from './composer.js';
+import { getStoredClass, localDateTimeToIso, setStoredClass } from './composer.js';
 
 beforeEach(() => {
   localStorage.clear();
@@ -24,16 +24,6 @@ describe('localDateTimeToIso', () => {
     expect(d.getDate()).toBe(5);
     expect(d.getHours()).toBe(9);
     expect(d.getMinutes()).toBe(5);
-  });
-});
-
-describe('makeCustomEventId', () => {
-  it('returns unique ids prefixed with custom:', () => {
-    const a = makeCustomEventId();
-    const b = makeCustomEventId();
-    expect(a).not.toBe(b);
-    expect(a.startsWith('custom:')).toBe(true);
-    expect(b.startsWith('custom:')).toBe(true);
   });
 });
 

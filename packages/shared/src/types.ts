@@ -40,3 +40,13 @@ export interface RaidEvent {
 export interface EventsResponse {
   events: RaidEvent[];
 }
+
+export interface CreateCustomEventInput {
+  raidName: string;
+  /** ISO 8601 UTC. */
+  startsAt: string;
+  /** ISO 8601 UTC. */
+  endsAt?: string;
+  status: RosterStatus;
+  character: CharacterSignup;
+}

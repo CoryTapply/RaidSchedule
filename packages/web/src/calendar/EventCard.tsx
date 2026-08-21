@@ -36,22 +36,16 @@ export function EventCard({ event, onSelect }: EventCardProps) {
         }
       }}
     >
-      {isHorde && (
-        <span className={styles.hordeBadge} title="Horde" aria-label="Horde">
-          <img src={hordeIcon} alt="" className={styles.hordeBadgeIcon} />
-        </span>
-      )}
       <div className={styles.topRow}>
-        <span className={`${styles.badge} ${badgeColorClass}`}>{initial}</span>
+        <span className={`${styles.badge} ${isHorde ? '' : badgeColorClass}`}>
+          {isHorde ? <img src={hordeIcon} alt="Horde" className={styles.hordeIcon} /> : initial}
+        </span>
         <span className={styles.raidName}>{event.raidName}</span>
       </div>
       <div className={styles.metaRow}>
         <span>{timeLabel(event.startsAt)}</span>
         <span className={styles.metaDot} />
         <span>{event.character.name}</span>
-      </div>
-      <div className={styles.statusRow}>
-        <span className={styles.statusLabel}>{event.status === 'confirmed' ? 'Confirmed' : 'Signed up'}</span>
       </div>
     </div>
   );

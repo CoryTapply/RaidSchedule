@@ -13,7 +13,7 @@ export interface EventComposerProps {
 }
 
 export function EventComposer({ composer, onChange, onCancel, onSave }: EventComposerProps) {
-  const canSave = composer.title.trim().length > 0;
+  const canSave = composer.title.trim().length > 0 && !composer.saving;
   const characterColor = classColor(composer.cls);
 
   return (
@@ -32,6 +32,11 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
         onContextMenu={(e) => {
           e.preventDefault();
           e.stopPropagation();
+        }}
+        onKeyDown={(e) => {
+          if (e.key !== 'Enter' || e.target instanceof HTMLButtonElement) return;
+          e.preventDefault();
+          if (canSave) onSave();
         }}
       >
         <div className={styles.header}>
@@ -114,10 +119,38 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
             </div>
           </div>
 
+          <div className={styles.field}>
+            <span className={styles.label}>Status</span>
+            <div className={styles.statusToggle}>
+              <button
+                type="button"
+                className={`${styles.statusOption} ${composer.status === 'pending' ? styles.statusOptionSelected : ''}`}
+                onClick={() => onChange({ status: 'pending' })}
+                aria-pressed={composer.status === 'pending'}
+              >
+                Tentative
+              </button>
+              <button
+                type="button"
+                className={`${styles.statusOption} ${composer.status === 'confirmed' ? styles.statusOptionSelected : ''}`}
+                onClick={() => onChange({ status: 'confirmed' })}
+                aria-pressed={composer.status === 'confirmed'}
+              >
+                Signed up
+              </button>
+            </div>
+          </div>
+
           <div className={styles.recurrenceRow}>
             <span className={styles.recurrenceDot} />
             <span>One-time event</span>
           </div>
+
+          {composer.saveError && (
+            <div style={{ color: '#e5484d', fontSize: 13 }} role="alert">
+              {composer.saveError}
+            </div>
+          )}
         </div>
 
         <div className={styles.footer}>
@@ -130,7 +163,7 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
             onClick={onSave}
             disabled={!canSave}
           >
-            Add event
+            {composer.saving ? 'Saving…' : 'Add event'}
           </button>
         </div>
       </div>

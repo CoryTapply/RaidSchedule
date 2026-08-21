@@ -1,6 +1,9 @@
+import type Database from 'better-sqlite3';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildApp } from './app.js';
+import { createDb } from './db/client.js';
+import { runMigrations } from './db/migrate.js';
 
 const APP_PASSWORD = 'correct-horse-battery-staple';
 const SESSION_SECRET = 'a'.repeat(32);
@@ -31,11 +34,18 @@ function rawEvent({ id, startTime, characterName }: RawEventOverrides) {
   };
 }
 
-async function makeApp(raidHelperApiKey = 'unused-in-these-tests'): Promise<FastifyInstance> {
+function makeDb(): Database.Database {
+  const db = createDb(':memory:');
+  runMigrations(db);
+  return db;
+}
+
+async function makeApp(raidHelperApiKey = 'unused-in-these-tests', db: Database.Database = makeDb()): Promise<FastifyInstance> {
   return buildApp({
     appPassword: APP_PASSWORD,
     sessionSecret: SESSION_SECRET,
     raidHelperApiKey,
+    db,
     logger: false,
   });
 }
@@ -159,5 +169,251 @@ describe('GET /api/events', () => {
     expect(res.statusCode).toBe(200);
     const names = res.json().events.map((e: { character: { name: string } }) => e.character.name);
     expect(names).toEqual(['WithinWindow', 'Future']);
+  });
+});
+
+describe('POST /api/events (custom events)', () => {
+  let app: FastifyInstance;
+  let testCounter = 0;
+
+  beforeEach(async () => {
+    testCounter += 1;
+    app = await makeApp(`custom-events-test-key-${testCounter}`);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([]), { status: 200 })));
+  });
+
+  afterEach(async () => {
+    await app.close();
+    vi.unstubAllGlobals();
+  });
+
+  async function loginCookie(app: FastifyInstance) {
+    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
+    return login.cookies.find((c) => c.name === 'raidschedule_session')!.value;
+  }
+
+  const validPayload = {
+    raidName: 'Guild Night',
+    startsAt: '2026-08-21T20:00:00.000Z',
+    endsAt: '2026-08-21T23:00:00.000Z',
+    status: 'confirmed',
+    character: { name: 'Thrashclaw', className: 'Druid' },
+  };
+
+  it('requires authentication', async () => {
+    const res = await app.inject({ method: 'POST', url: '/api/events', payload: validPayload });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('rejects an invalid body', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+      payload: { raidName: '' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('creates a custom event and returns it in a subsequent GET /api/events', async () => {
+    const cookie = await loginCookie(app);
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+      payload: validPayload,
+    });
+    expect(createRes.statusCode).toBe(201);
+    const created = createRes.json();
+    expect(created.source).toBe('custom');
+    expect(created.id).toMatch(/^custom:/);
+    expect(created.character.name).toBe('Thrashclaw');
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(listRes.statusCode).toBe(200);
+    expect(listRes.json().events).toEqual([created]);
+  });
+});
+
+describe('DELETE /api/events/:id (custom events)', () => {
+  let app: FastifyInstance;
+  let testCounter = 0;
+
+  beforeEach(async () => {
+    testCounter += 1;
+    app = await makeApp(`custom-events-delete-test-key-${testCounter}`);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([]), { status: 200 })));
+  });
+
+  afterEach(async () => {
+    await app.close();
+    vi.unstubAllGlobals();
+  });
+
+  async function loginCookie(app: FastifyInstance) {
+    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
+    return login.cookies.find((c) => c.name === 'raidschedule_session')!.value;
+  }
+
+  const validPayload = {
+    raidName: 'Guild Night',
+    startsAt: '2026-08-21T20:00:00.000Z',
+    endsAt: '2026-08-21T23:00:00.000Z',
+    status: 'confirmed',
+    character: { name: 'Thrashclaw', className: 'Druid' },
+  };
+
+  it('requires authentication', async () => {
+    const res = await app.inject({ method: 'DELETE', url: '/api/events/custom:does-not-exist' });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('rejects an id that is not a custom event id', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/events/raid-helper:123:456',
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('returns 404 for an unknown custom event id', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'DELETE',
+      url: '/api/events/custom:does-not-exist',
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('deletes a custom event and removes it from a subsequent GET /api/events', async () => {
+    const cookie = await loginCookie(app);
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+      payload: validPayload,
+    });
+    const created = createRes.json();
+
+    const deleteRes = await app.inject({
+      method: 'DELETE',
+      url: `/api/events/${encodeURIComponent(created.id)}`,
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(deleteRes.statusCode).toBe(204);
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(listRes.json().events).toEqual([]);
+  });
+});
+
+describe('PATCH /api/events/:id (custom events)', () => {
+  let app: FastifyInstance;
+  let testCounter = 0;
+
+  beforeEach(async () => {
+    testCounter += 1;
+    app = await makeApp(`custom-events-patch-test-key-${testCounter}`);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([]), { status: 200 })));
+  });
+
+  afterEach(async () => {
+    await app.close();
+    vi.unstubAllGlobals();
+  });
+
+  async function loginCookie(app: FastifyInstance) {
+    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
+    return login.cookies.find((c) => c.name === 'raidschedule_session')!.value;
+  }
+
+  const pendingPayload = {
+    raidName: 'Guild Night',
+    startsAt: '2026-08-21T20:00:00.000Z',
+    endsAt: '2026-08-21T23:00:00.000Z',
+    status: 'pending',
+    character: { name: 'Thrashclaw', className: 'Druid' },
+  };
+
+  it('requires authentication', async () => {
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/events/custom:does-not-exist',
+      payload: { status: 'confirmed' },
+    });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('rejects an id that is not a custom event id', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/events/raid-helper:123:456',
+      cookies: { raidschedule_session: cookie },
+      payload: { status: 'confirmed' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('rejects an invalid body', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/events/custom:does-not-exist',
+      cookies: { raidschedule_session: cookie },
+      payload: { status: 'not-a-status' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('returns 404 for an unknown custom event id', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/api/events/custom:does-not-exist',
+      cookies: { raidschedule_session: cookie },
+      payload: { status: 'confirmed' },
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('updates a pending custom event to confirmed and reflects it in a subsequent GET /api/events', async () => {
+    const cookie = await loginCookie(app);
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+      payload: pendingPayload,
+    });
+    const created = createRes.json();
+    expect(created.status).toBe('pending');
+
+    const patchRes = await app.inject({
+      method: 'PATCH',
+      url: `/api/events/${encodeURIComponent(created.id)}`,
+      cookies: { raidschedule_session: cookie },
+      payload: { status: 'confirmed' },
+    });
+    expect(patchRes.statusCode).toBe(200);
+    expect(patchRes.json()).toMatchObject({ id: created.id, status: 'confirmed' });
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(listRes.json().events).toEqual([{ ...created, status: 'confirmed' }]);
   });
 });

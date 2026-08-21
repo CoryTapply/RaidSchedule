@@ -15,6 +15,9 @@ function makeComposer(overrides: Partial<ComposerState> = {}): ComposerState {
     end: '23:00',
     character: '',
     cls: 'Druid',
+    status: 'confirmed',
+    saving: false,
+    saveError: null,
     ...overrides,
   };
 }
@@ -119,5 +122,88 @@ describe('EventComposer', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Add event' }));
     expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onSave when Enter is pressed in the title field with a title present', async () => {
+    const onSave = vi.fn();
+    render(
+      <EventComposer
+        composer={makeComposer({ title: 'Nerub-ar Palace' })}
+        onChange={vi.fn()}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+    screen.getByPlaceholderText('Black Temple').focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onSave when Enter is pressed in the character field', async () => {
+    const onSave = vi.fn();
+    render(
+      <EventComposer
+        composer={makeComposer({ title: 'Nerub-ar Palace' })}
+        onChange={vi.fn()}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+    screen.getByPlaceholderText('Character name').focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSave).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not call onSave on Enter when the title is empty', async () => {
+    const onSave = vi.fn();
+    render(
+      <EventComposer composer={makeComposer({ title: '' })} onChange={vi.fn()} onCancel={vi.fn()} onSave={onSave} />,
+    );
+    screen.getByPlaceholderText('Black Temple').focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('shows Signed up selected by default', () => {
+    render(<EventComposer composer={makeComposer()} onChange={vi.fn()} onCancel={vi.fn()} onSave={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Signed up' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Tentative' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('calls onChange with pending status when Tentative is clicked', async () => {
+    const onChange = vi.fn();
+    render(<EventComposer composer={makeComposer()} onChange={onChange} onCancel={vi.fn()} onSave={vi.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Tentative' }));
+    expect(onChange).toHaveBeenCalledWith({ status: 'pending' });
+  });
+
+  it('calls onChange with confirmed status when Signed up is clicked', async () => {
+    const onChange = vi.fn();
+    render(
+      <EventComposer
+        composer={makeComposer({ status: 'pending' })}
+        onChange={onChange}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Signed up' }));
+    expect(onChange).toHaveBeenCalledWith({ status: 'confirmed' });
+  });
+
+  it('does not call onSave when Enter is pressed on a class option button', async () => {
+    const onSave = vi.fn();
+    const onChange = vi.fn();
+    render(
+      <EventComposer
+        composer={makeComposer({ title: 'Nerub-ar Palace' })}
+        onChange={onChange}
+        onCancel={vi.fn()}
+        onSave={onSave}
+      />,
+    );
+    screen.getByRole('button', { name: 'Mage' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

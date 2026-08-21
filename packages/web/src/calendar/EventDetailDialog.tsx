@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { X } from '@phosphor-icons/react';
 import type { RaidEvent } from '@raidschedule/shared';
 import { classColor } from './classColors.js';
@@ -9,14 +9,31 @@ import styles from '../styles/dialog.module.css';
 export interface EventDetailDialogProps {
   event: RaidEvent;
   onClose: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
+  deleteError?: string | null;
+  onConfirm?: () => void;
+  confirming?: boolean;
+  confirmError?: string | null;
 }
 
-export function EventDetailDialog({ event, onClose }: EventDetailDialogProps) {
+export function EventDetailDialog({
+  event,
+  onClose,
+  onDelete,
+  deleting = false,
+  deleteError = null,
+  onConfirm,
+  confirming = false,
+  confirmError = null,
+}: EventDetailDialogProps) {
   const color = classColor(event.character.className);
   const isConfirmed = event.status === 'confirmed';
   const variantClass = isConfirmed ? eventCardStyles.confirmed : eventCardStyles.pending;
   const badgeColorClass = isConfirmed ? eventCardStyles.badgeColorConfirmed : eventCardStyles.badgeColorPending;
   const initial = event.character.className === 'Unknown' ? '?' : event.character.className[0];
+  const isCustom = event.source === 'custom';
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
     <div className={styles.backdrop} onClick={onClose}>
@@ -44,6 +61,28 @@ export function EventDetailDialog({ event, onClose }: EventDetailDialogProps) {
             <span className={styles.statusLabel}>{event.status === 'confirmed' ? 'Roster confirmed' : 'Signed up'}</span>
           </div>
         </div>
+        {isCustom && (
+          <div className={styles.footer}>
+            {(confirmError ?? deleteError) && (
+              <span className={styles.deleteError} role="alert">
+                {confirmError ?? deleteError}
+              </span>
+            )}
+            {event.status === 'pending' && (
+              <button type="button" className={styles.confirmButton} onClick={onConfirm} disabled={confirming}>
+                {confirming ? 'Confirming…' : 'Mark confirmed'}
+              </button>
+            )}
+            <button
+              type="button"
+              className={`${styles.deleteButton} ${confirmingDelete ? styles.deleteButtonConfirm : ''}`}
+              onClick={() => (confirmingDelete ? onDelete?.() : setConfirmingDelete(true))}
+              disabled={deleting}
+            >
+              {deleting ? 'Deleting…' : confirmingDelete ? 'Confirm delete' : 'Delete event'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

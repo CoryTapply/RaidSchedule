@@ -176,6 +176,29 @@
   white-space: nowrap;
 }
 
+.statusToggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+}
+
+.statusOption {
+  padding: 6px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-neutral-700);
+  background: var(--color-neutral-900);
+  color: var(--color-neutral-300);
+  font: 500 11px var(--font-body);
+  text-align: center;
+  cursor: pointer;
+}
+
+.statusOptionSelected {
+  border: 1px solid var(--color-accent-600);
+  background: color-mix(in srgb, var(--color-accent-600) 22%, var(--color-neutral-900));
+  color: var(--color-text);
+}
+
 .recurrenceRow {
   display: flex;
   align-items: center;

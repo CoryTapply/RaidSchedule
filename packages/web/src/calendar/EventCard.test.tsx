@@ -23,12 +23,12 @@ describe('EventCard', () => {
     expect(screen.getByText('Thrashclaw')).toBeInTheDocument();
   });
 
-  it('shows "Signed up" for pending events and "Confirmed" for confirmed ones', () => {
+  it('does not render a status line for pending or confirmed events', () => {
     const { rerender } = render(<EventCard event={makeEvent({ status: 'pending' })} onSelect={vi.fn()} />);
-    expect(screen.getByText('Signed up')).toBeInTheDocument();
+    expect(screen.queryByText('Signed up')).not.toBeInTheDocument();
 
     rerender(<EventCard event={makeEvent({ status: 'confirmed' })} onSelect={vi.fn()} />);
-    expect(screen.getByText('Confirmed')).toBeInTheDocument();
+    expect(screen.queryByText('Confirmed')).not.toBeInTheDocument();
   });
 
   it('calls onSelect with the event when clicked', async () => {
@@ -58,11 +58,13 @@ describe('EventCard', () => {
     });
   });
 
-  it('shows a Horde badge when the title contains "horde", and hides it otherwise', () => {
+  it('shows the Horde icon in the class badge when the title contains "horde", and the class initial otherwise', () => {
     const { rerender } = render(<EventCard event={makeEvent({ raidName: 'Thursday Horde Run' })} onSelect={vi.fn()} />);
-    expect(screen.getByLabelText('Horde')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Horde' })).toBeInTheDocument();
+    expect(screen.queryByText('D')).not.toBeInTheDocument();
 
     rerender(<EventCard event={makeEvent({ raidName: 'Wed Ally Run' })} onSelect={vi.fn()} />);
-    expect(screen.queryByLabelText('Horde')).not.toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Horde' })).not.toBeInTheDocument();
+    expect(screen.getByText('D')).toBeInTheDocument();
   });
 });

@@ -46,7 +46,19 @@ export function CalendarPage() {
           />
         </>
       )}
-      {state.selectedEvent && <EventDetailDialog event={state.selectedEvent} onClose={state.closeDialog} />}
+      {state.selectedEvent && (
+        <EventDetailDialog
+          key={state.selectedEvent.id}
+          event={state.selectedEvent}
+          onClose={state.closeDialog}
+          onDelete={state.deleteSelectedEvent}
+          deleting={state.deletingEvent}
+          deleteError={state.deleteError}
+          onConfirm={state.confirmSelectedEvent}
+          confirming={state.confirmingEvent}
+          confirmError={state.confirmError}
+        />
+      )}
       {state.composer && (
         <EventComposer
           composer={state.composer}

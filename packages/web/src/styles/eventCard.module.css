@@ -1,5 +1,4 @@
 .card {
-  position: relative;
   cursor: pointer;
   border-radius: var(--card-radius);
   padding: var(--card-pad-y) var(--card-pad-x);
@@ -31,30 +30,6 @@
   border: var(--confirmed-border-width) solid var(--class-color);
   background: color-mix(in srgb, var(--class-color) 30%, var(--color-neutral-800));
   color: var(--color-text);
-}
-
-/*
- * A small badge inset inside the top-right corner for raids whose title
- * mentions "Horde", showing the Horde crest.
- */
-.hordeBadge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: var(--color-neutral-900);
-  border: 1px solid #e5484d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.hordeBadgeIcon {
-  width: 10px;
-  height: 10px;
 }
 
 .topRow {
@@ -90,6 +65,15 @@
   color: #161826;
 }
 
+.hordeIcon {
+  margin-top: 10px;
+  width: 30px;
+  height: 30px;
+  max-width: fit-content;
+  /* object-fit: contain; */
+  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.8));
+}
+
 .raidName {
   font: 500 var(--raidname-size) var(--font-body);
   overflow: hidden;
@@ -117,26 +101,3 @@
   flex-shrink: 0;
 }
 
-.statusRow {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  padding-left: calc(var(--badge-size) + 6px);
-}
-
-.statusLabel {
-  font: 500 var(--meta-size) var(--font-body);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--color-neutral-400);
-}
-
-.confirmed .statusLabel {
-  color: var(--class-color);
-}
-
-@container calendar (min-width: 1900px) {
-  .statusRow {
-    display: flex;
-  }
-}
