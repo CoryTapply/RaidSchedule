@@ -8,6 +8,8 @@ dist/
 .DS_Store
 prompt/
 *.db
+*.db-wal
+*.db-shm
 *.sqlite
 *.sqlite-journal
 *.sqlite-wal
