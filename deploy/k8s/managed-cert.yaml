@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: raidschedule-cert
+  namespace: raidschedule
+spec:
+  domains:
+    - raid.zerpy.dev
