@@ -88,10 +88,11 @@ function isAbsence(className: string): boolean {
   return className.toLowerCase() === ABSENCE_LABEL;
 }
 
-function normalizeSignUp(raw: RawRaidHelperEvent, signUp: RawRaidHelperSignUp): RaidEvent {
+function normalizeSignUp(raw: RawRaidHelperEvent, signUp: RawRaidHelperSignUp, isHorde: boolean): RaidEvent {
   return {
     id: `raid-helper:${raw.id}:${signUp.id}`,
     source: 'raid-helper',
+    raidHelperEventId: raw.id,
     raidName: raw.title,
     startsAt: new Date(raw.startTime * 1000).toISOString(),
     endsAt: new Date(raw.endTime * 1000).toISOString(),
@@ -101,9 +102,17 @@ function normalizeSignUp(raw: RawRaidHelperEvent, signUp: RawRaidHelperSignUp): 
       className: inferClass(signUp.className, signUp.specName),
       spec: signUp.specName,
     },
+    isHorde,
   };
 }
 
-export function normalizeRaidHelperEvent(raw: RawRaidHelperEvent): RaidEvent[] {
-  return raw.signUps.filter((signUp) => !isAbsence(signUp.className)).map((signUp) => normalizeSignUp(raw, signUp));
+/**
+ * `isHorde` is resolved by the caller (title match, overridden by any explicit
+ * horde_tags row for `raw.id`) so this stays a pure mapping from raid-helper's
+ * shape to ours.
+ */
+export function normalizeRaidHelperEvent(raw: RawRaidHelperEvent, isHorde: boolean): RaidEvent[] {
+  return raw.signUps
+    .filter((signUp) => !isAbsence(signUp.className))
+    .map((signUp) => normalizeSignUp(raw, signUp, isHorde));
 }

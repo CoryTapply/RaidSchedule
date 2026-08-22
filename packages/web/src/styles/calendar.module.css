@@ -1,64 +1,104 @@
 /*
- * Fluid sizing between the "standard" (design/Raid Calendar.dc.html, ~1600px
- * column) and "4K" (design/Raid Calendar 4K.dc.html, ~2200px column) design
- * endpoints, driven by the root's own container inline size (cqi). Each
- * clamp() below is a linear interpolation between the two documented values;
- * see the calendar module's build notes for the derivation.
+ * Nebula timeline calendar. Sized with clamp()/cqi the same way the old flat
+ * design was: a "standard" endpoint taken verbatim from
+ * design/Raid Calendar Nebula.dc.html (container width 1600px, 1cqi = 16px)
+ * and a "4K" endpoint at 2200px (1cqi = 22px). Unlike the flat design there
+ * is no 4K Nebula reference file, so the 4K endpoint for every token below
+ * that has no analog in the old two-file system (the whole timeline: gutter
+ * width, PX_PER_HOUR, PAD_TOP, hour/event/day-number type, the Horde mark)
+ * is an extrapolation at roughly the same scale factor (~1.6x) the old
+ * system used for comparable grid-geometry tokens (day-pad, day-row-min,
+ * weekday-pad) — a judgment call, not a documented spec. Tokens that do have
+ * an old analog (header title, nav/today buttons, weekday type, dialog)
+ * keep that analog's original scale ratio, re-anchored to Nebula's own
+ * standard-endpoint literal. Padding/gaps are deliberately NOT part of this
+ * clamp system — the Nebula design ties those to the design system's fixed
+ * --space-* scale instead (see every `var(--space-N)` in the .dc.html), so
+ * they're used directly, unscaled, below.
  */
 .root {
+  position: relative;
   container: calendar / inline-size;
   min-height: 100vh;
-  background: var(--color-bg);
-  color: var(--color-text);
+  color: #eae8ff;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  max-width: 2200px;
-  max-height: 1500px;
-  margin: 0 auto;
-  padding: clamp(28px, calc(6.67px + 1.333cqi), 36px) clamp(28px, calc(-14.67px + 2.667cqi), 44px)
-    clamp(28px, calc(-14.67px + 2.667cqi), 44px);
-  gap: clamp(18px, calc(-8.67px + 1.667cqi), 28px);
+  overflow: hidden;
+  padding: var(--space-6);
+  background:
+    radial-gradient(120% 80% at 12% -10%, #2b1b6b 0%, rgba(43, 27, 107, 0) 55%),
+    radial-gradient(90% 70% at 88% 8%, #4a2a7a 0%, rgba(74, 42, 122, 0) 50%),
+    radial-gradient(140% 100% at 60% 110%, #6b2b6b 0%, rgba(107, 43, 107, 0) 45%),
+    linear-gradient(180deg, #0a0720 0%, #07051a 60%, #050410 100%);
 
-  --header-title-size: clamp(22px, calc(0.67px + 1.333cqi), 30px);
+  --header-title-size: clamp(24px, 1.5cqi, 33px);
   --range-size: clamp(13px, calc(-0.33px + 0.833cqi), 18px);
   --nav-btn-size: clamp(36px, calc(-6.67px + 2.667cqi), 52px);
   --nav-btn-font: clamp(16px, 1cqi, 22px);
   --today-btn-height: clamp(36px, calc(-6.67px + 2.667cqi), 52px);
-  --today-btn-pad-x: clamp(18px, calc(-3.33px + 1.333cqi), 26px);
   --today-btn-font: clamp(13px, calc(2.33px + 0.667cqi), 17px);
 
-  --weekday-pad-y: clamp(10px, calc(2px + 1cqi), 16px);
+  --weekday-pad-y: clamp(11px, calc(-7.67px + 1.167cqi), 18px);
   --weekday-pad-x: clamp(12px, calc(-9.33px + 1.333cqi), 20px);
   --weekday-font: clamp(11px, calc(0.33px + 0.667cqi), 15px);
 
-  --day-pad: clamp(10px, calc(-11.33px + 1.333cqi), 18px);
-  --day-gap: clamp(8px, 1cqi, 14px);
-  --day-num-size: clamp(13px, calc(-11px + 1.5cqi), 22px);
-  --day-row-min: clamp(150px, calc(-90px + 15cqi), 240px);
+  --gutter-width: clamp(58px, calc(-35.33px + 5.833cqi), 93px);
+  --px-per-hour: clamp(38px, calc(-23.33px + 3.833cqi), 61px);
+  --pad-top: clamp(16px, calc(-10.67px + 1.667cqi), 26px);
+  --hour-font: clamp(10.5px, calc(-6.83px + 1.083cqi), 17px);
+  --day-pill-font: clamp(11.5px, calc(-7.17px + 1.167cqi), 18.5px);
 
-  --card-pad-y: clamp(6px, calc(-15.33px + 1.333cqi), 14px);
-  --card-pad-x: clamp(8px, calc(-13.33px + 1.333cqi), 16px);
-  --card-gap: clamp(2px, calc(-6px + 1cqi), 8px);
-  --card-radius: clamp(4px, calc(-6.67px + 0.667cqi), 8px);
-  --badge-size: clamp(16px, calc(-21.33px + 2.333cqi), 30px);
-  --badge-radius: clamp(4px, calc(-4px + 0.5cqi), 7px);
-  --badge-font: clamp(9px, calc(-4.33px + 0.833cqi), 14px);
-  --raidname-size: clamp(11.5px, calc(-5.83px + 1.083cqi), 18px);
-  --meta-size: clamp(10.5px, calc(-1.5px + 0.75cqi), 15px);
-  --confirmed-border-width: clamp(2px, calc(-0.67px + 0.167cqi), 3px);
+  --event-pad-y: clamp(5px, calc(-13.67px + 1.167cqi), 12px);
+  --event-pad-x: clamp(7px, calc(-11.67px + 1.167cqi), 14px);
+  --event-raidname-font: clamp(11px, calc(-6.33px + 1.083cqi), 17.5px);
+  --event-meta-font: clamp(10px, calc(-6px + 1cqi), 16px);
+  --mark-size: clamp(30px, calc(-18px + 3cqi), 48px);
 
-  --dialog-width: clamp(340px, calc(-140px + 30cqi), 520px);
-  --dialog-pad: clamp(18px, calc(-19.33px + 2.333cqi), 32px);
-  --dialog-gap: clamp(18px, calc(2px + 1cqi), 24px);
+  --dialog-width: clamp(352px, calc(-144px + 31cqi), 538px);
   --dialog-title-size: clamp(16px, calc(-5.33px + 1.333cqi), 24px);
   --dialog-meta-size: clamp(12px, calc(1.33px + 0.667cqi), 16px);
-  --dialog-card-pad: clamp(8.4px, calc(-17.2px + 1.6cqi), 18px);
   --dialog-badge-size: clamp(28px, calc(-14.67px + 2.667cqi), 44px);
-  --dialog-badge-radius: clamp(6px, calc(-2px + 0.5cqi), 9px);
   --dialog-char-size: clamp(13px, calc(-0.33px + 0.833cqi), 18px);
   --dialog-status-size: clamp(12px, calc(4px + 0.5cqi), 15px);
   --dialog-close-size: clamp(28px, calc(-4px + 2cqi), 40px);
+}
+
+.root::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(1px 1px at 12% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 34% 8%, #cfc9ff, transparent),
+    radial-gradient(1.5px 1.5px at 58% 30%, #fff, transparent),
+    radial-gradient(1px 1px at 76% 12%, #bfe0ff, transparent),
+    radial-gradient(1px 1px at 88% 44%, #fff, transparent),
+    radial-gradient(1px 1px at 22% 62%, #e6dcff, transparent),
+    radial-gradient(1.2px 1.2px at 46% 80%, #fff, transparent),
+    radial-gradient(1px 1px at 68% 68%, #cfc9ff, transparent),
+    radial-gradient(1px 1px at 92% 86%, #fff, transparent),
+    radial-gradient(1px 1px at 6% 90%, #bfe0ff, transparent);
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.signOutButton {
+  align-self: flex-start;
+  background: transparent;
+  border: none;
+  color: rgba(214, 208, 255, 0.5);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
 }
 
 .header {
@@ -72,17 +112,20 @@
 .titleBlock {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .title {
   font: 500 var(--header-title-size) / 1.2 var(--font-heading);
-  color: var(--color-text);
+  background: linear-gradient(92deg, #ffffff 0%, #c9b8ff 45%, #f7a8e8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .rangeLabel {
   font: 400 var(--range-size) var(--font-body);
-  color: var(--color-neutral-300);
+  color: rgba(214, 208, 255, 0.6);
 }
 
 .controls {
@@ -99,118 +142,136 @@
 .navButton {
   width: var(--nav-btn-size);
   height: var(--nav-btn-size);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-neutral-700);
-  background: var(--color-neutral-800);
-  color: var(--color-text);
+  border-radius: 10px;
+  border: 1px solid rgba(145, 132, 217, 0.3);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(10px);
+  color: #eae8ff;
   font-size: var(--nav-btn-font);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: 0.18s;
 }
 
 .navButton:hover {
-  background: var(--color-neutral-700);
+  border-color: rgba(199, 184, 255, 0.7);
+  background: linear-gradient(180deg, rgba(145, 132, 217, 0.28), rgba(145, 132, 217, 0.08));
 }
 
 .todayButton {
   height: var(--today-btn-height);
-  padding: 0 var(--today-btn-pad-x);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-accent-600);
-  background: transparent;
-  color: var(--color-text);
+  padding: 0 var(--space-4);
+  border-radius: 10px;
+  border: 1px solid rgba(199, 184, 255, 0.55);
+  background: linear-gradient(135deg, rgba(145, 132, 217, 0.3), rgba(247, 168, 232, 0.14));
+  backdrop-filter: blur(10px);
+  color: #f3efff;
   font: 500 var(--today-btn-font) var(--font-body);
   cursor: pointer;
+  box-shadow: 0 0 18px rgba(145, 132, 217, 0.22);
+  transition: 0.18s;
 }
 
 .todayButton:hover {
-  background: var(--color-accent-800);
+  box-shadow: 0 0 26px rgba(145, 132, 217, 0.4);
 }
 
-.weekdayHeader {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  border-top: 1px solid var(--color-neutral-700);
-  border-left: 1px solid var(--color-neutral-700);
-  border-radius: var(--radius-md) var(--radius-md) 0 0;
+.panel {
+  border-radius: 16px;
   overflow: hidden;
+  border: 1px solid rgba(145, 132, 217, 0.22);
+  background: linear-gradient(180deg, rgba(20, 15, 48, 0.62), rgba(10, 8, 26, 0.5));
+  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 70px rgba(4, 2, 14, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.headerRow {
+  display: grid;
+  grid-template-columns: var(--gutter-width) repeat(7, minmax(0, 1fr));
+  background: linear-gradient(180deg, rgba(145, 132, 217, 0.14), rgba(145, 132, 217, 0.03));
+}
+
+.gutterCorner {
+  box-sizing: border-box;
+  border-right: 1px solid rgba(145, 132, 217, 0.14);
+  border-bottom: 1px solid rgba(145, 132, 217, 0.18);
 }
 
 .weekdayCell {
   box-sizing: border-box;
   padding: var(--weekday-pad-y) var(--weekday-pad-x);
   font: 500 var(--weekday-font) var(--font-body);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-neutral-400);
-  border-right: 1px solid var(--color-neutral-700);
-  border-bottom: 1px solid var(--color-neutral-700);
-  background: var(--color-neutral-900);
+  color: rgba(214, 208, 255, 0.66);
+  border-right: 1px solid rgba(145, 132, 217, 0.14);
+  border-bottom: 1px solid rgba(145, 132, 217, 0.18);
 }
 
-.dayGrid {
+.weekRow {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  grid-auto-rows: minmax(var(--day-row-min), max-content);
-  border-left: 1px solid var(--color-neutral-700);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  overflow: hidden;
+  grid-template-columns: var(--gutter-width) repeat(7, minmax(0, 1fr));
+}
+
+.gutter {
+  position: relative;
+  box-sizing: border-box;
+  height: calc(var(--pad-top) + var(--row-height-hours) * var(--px-per-hour) + 10px);
+  border-right: 1px solid rgba(145, 132, 217, 0.14);
+  border-bottom: 1px solid rgba(145, 132, 217, 0.12);
+  background: linear-gradient(180deg, rgba(12, 9, 32, 0.5), rgba(12, 9, 32, 0.18));
+}
+
+.hourLabel {
+  position: absolute;
+  right: 8px;
+  top: calc(var(--pad-top) + var(--offset-hours) * var(--px-per-hour));
+  transform: translateY(-50%);
+  font: 400 var(--hour-font) var(--font-body);
+  color: rgba(206, 199, 255, 0.45);
+  white-space: nowrap;
 }
 
 .dayCell {
+  position: relative;
   box-sizing: border-box;
-  padding: var(--day-pad);
-  min-width: 0;
+  height: calc(var(--pad-top) + var(--row-height-hours) * var(--px-per-hour) + 10px);
   overflow: hidden;
-  border-right: 1px solid var(--color-neutral-700);
-  border-bottom: 1px solid var(--color-neutral-700);
-  border-top: 1px solid var(--color-neutral-700);
-  background: var(--color-neutral-900);
-  display: flex;
-  flex-direction: column;
-  gap: var(--day-gap);
+  border-right: 1px solid rgba(145, 132, 217, 0.12);
+  border-bottom: 1px solid rgba(145, 132, 217, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.008));
+  transition: background 0.2s;
 }
 
 .dayCellHighlighted {
-  background: color-mix(in oklch, var(--color-accent-500) 12%, var(--color-neutral-900));
-  border-top: 2px solid var(--color-accent-500);
+  background: linear-gradient(180deg, rgba(145, 132, 217, 0.1), rgba(145, 132, 217, 0.025));
+  box-shadow: inset 0 1px 0 0 rgba(199, 184, 255, 0.24), inset 0 0 34px rgba(145, 132, 217, 0.06);
 }
 
-/*
- * A slight lightening so today reads clearly, layered as an inset box-shadow
- * (not the `background` property) so it washes over whatever background is
- * already there — including the lockout-week highlight above — instead of
- * one overwriting the other.
- */
-.dayCellToday {
-  box-shadow: inset 0 0 0 999px color-mix(in srgb, white 6%, transparent);
-}
-
-.dayNumberRow {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
+.hourLine {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--pad-top) + var(--offset-hours) * var(--px-per-hour));
+  height: 1px;
+  background: linear-gradient(90deg, rgba(145, 132, 217, 0.03), rgba(145, 132, 217, 0.14), rgba(145, 132, 217, 0.03));
 }
 
 .dayNumber {
-  font: 500 var(--day-num-size) var(--font-body);
-  color: var(--color-neutral-300);
+  position: absolute;
+  top: 3px;
+  left: 5px;
+  padding: 1px 5px;
+  border-radius: 6px;
+  font: 500 var(--day-pill-font) var(--font-body);
+  color: rgba(206, 199, 255, 0.55);
+  z-index: 1;
 }
 
 .dayNumberToday {
-  color: var(--color-accent-300);
-}
-
-.dayAnnotation {
-  font: 400 calc(var(--day-num-size) * 0.64) var(--font-body);
-  color: var(--color-neutral-500);
-}
-
-.eventList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
+  color: #ffe7fa;
+  background: linear-gradient(135deg, rgba(247, 168, 232, 0.34), rgba(201, 184, 255, 0.18));
+  box-shadow: 0 0 12px rgba(247, 168, 232, 0.35), inset 0 0 0 1px rgba(247, 168, 232, 0.5);
 }

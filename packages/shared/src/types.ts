@@ -28,6 +28,12 @@ export interface RaidEvent {
   /** Namespaced by source, e.g. `raid-helper:${eventId}:${signUpId}`. */
   id: string;
   source: 'raid-helper' | 'custom';
+  /**
+   * The underlying raid-helper event id shared by every sign-up on the same
+   * raid (only present for `source: 'raid-helper'`). Tagging a raid as Horde
+   * (see `isHorde`) applies to this id, not the per-sign-up `id`.
+   */
+  raidHelperEventId?: string;
   raidName: string;
   /** ISO 8601 UTC. */
   startsAt: string;
@@ -35,6 +41,14 @@ export interface RaidEvent {
   endsAt?: string;
   status: RosterStatus;
   character: CharacterSignup;
+  /**
+   * Whether this raid should show the Horde badge. Defaults to a title match
+   * (see `isHordeTitle`) but can be explicitly overridden per raid-helper
+   * event via the horde-tag endpoint — the override always wins. Always set
+   * by the server; optional here only so callers that build a `RaidEvent`
+   * without caring about it (tests, seed data) don't have to.
+   */
+  isHorde?: boolean;
 }
 
 export interface EventsResponse {

@@ -1,7 +1,8 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(6, 4, 15, 0.62);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -11,14 +12,15 @@
 .panel {
   width: var(--dialog-width);
   max-width: calc(100vw - 32px);
-  background: var(--color-neutral-800);
-  border: 1px solid var(--color-neutral-700);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  padding: var(--dialog-pad);
+  background: linear-gradient(160deg, rgba(36, 26, 84, 0.9), rgba(14, 10, 34, 0.92));
+  border: 1px solid rgba(167, 152, 240, 0.34);
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(3, 2, 10, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(22px);
+  padding: var(--space-4);
   display: flex;
   flex-direction: column;
-  gap: var(--dialog-gap);
+  gap: var(--space-4);
 }
 
 .titleRow {
@@ -36,21 +38,21 @@
 
 .raidName {
   font: 500 var(--dialog-title-size) var(--font-heading);
-  color: var(--color-text);
+  color: #f4f1ff;
 }
 
 .dateLine {
   font: 400 var(--dialog-meta-size) var(--font-body);
-  color: var(--color-neutral-300);
+  color: rgba(214, 208, 255, 0.62);
 }
 
 .closeButton {
   width: var(--dialog-close-size);
   height: var(--dialog-close-size);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-neutral-700);
-  background: transparent;
-  color: var(--color-neutral-300);
+  border-radius: 8px;
+  border: 1px solid rgba(145, 132, 217, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 222, 255, 0.7);
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
@@ -58,18 +60,22 @@
   justify-content: center;
 }
 
+.closeButton:hover {
+  background: rgba(145, 132, 217, 0.22);
+}
+
 .characterCard {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: var(--dialog-card-pad);
-  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  border-radius: 12px;
 }
 
 .badge {
   width: var(--dialog-badge-size);
   height: var(--dialog-badge-size);
-  border-radius: var(--dialog-badge-radius);
+  border-radius: 8px;
   font: 600 var(--dialog-char-size) var(--font-body);
   display: flex;
   align-items: center;
@@ -85,12 +91,36 @@
 
 .characterName {
   font: 500 var(--dialog-char-size) var(--font-body);
-  color: var(--color-text);
+  color: #f4f1ff;
 }
 
 .statusLabel {
   font: 400 var(--dialog-status-size) var(--font-body);
-  color: var(--color-neutral-300);
+  color: rgba(226, 222, 255, 0.62);
+}
+
+.factionRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font: 400 12.5px var(--font-body);
+  color: rgba(214, 208, 255, 0.62);
+}
+
+.factionBar {
+  width: 16px;
+  height: 3px;
+  border-radius: 2px;
+}
+
+.factionBarHorde {
+  background: linear-gradient(90deg, #ff4b4b, rgba(255, 75, 75, 0.25));
+  box-shadow: 0 0 8px rgba(255, 75, 75, 0.45);
+}
+
+.factionBarAlliance {
+  background: linear-gradient(90deg, #5aa8ff, rgba(90, 168, 255, 0.25));
+  box-shadow: 0 0 8px rgba(90, 168, 255, 0.4);
 }
 
 .footer {
@@ -101,7 +131,7 @@
 }
 
 .deleteError {
-  color: #e5484d;
+  color: #ff6b6b;
   font-size: 12px;
   margin-right: auto;
 }
@@ -109,28 +139,28 @@
 .deleteButton {
   height: 30px;
   padding: 0 var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-neutral-700);
-  background: transparent;
-  color: var(--color-neutral-300);
+  border-radius: 8px;
+  border: 1px solid rgba(145, 132, 217, 0.28);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(226, 222, 255, 0.8);
   font: 500 12px var(--font-body);
   cursor: pointer;
 }
 
 .deleteButton:hover {
-  border-color: #e5484d;
-  color: #e5484d;
+  border-color: #ff6b6b;
+  color: #ff6b6b;
 }
 
 .deleteButtonConfirm {
-  background: #e5484d;
-  border-color: #e5484d;
-  color: white;
+  background: #ff6b6b;
+  border-color: #ff6b6b;
+  color: #1a0505;
 }
 
 .deleteButtonConfirm:hover {
-  background: #c93a3f;
-  border-color: #c93a3f;
+  background: #ff8787;
+  border-color: #ff8787;
 }
 
 .deleteButton:disabled {
@@ -141,19 +171,21 @@
 .confirmButton {
   height: 30px;
   padding: 0 var(--space-3);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--color-accent-600);
-  background: var(--color-accent-800);
-  color: var(--color-text);
+  border-radius: 8px;
+  border: 1px solid rgba(199, 184, 255, 0.5);
+  background: linear-gradient(135deg, rgba(145, 132, 217, 0.42), rgba(247, 168, 232, 0.2));
+  color: #f6f4ff;
   font: 500 12px var(--font-body);
   cursor: pointer;
+  box-shadow: 0 0 16px rgba(145, 132, 217, 0.2);
 }
 
 .confirmButton:hover {
-  background: var(--color-accent-700);
+  box-shadow: 0 0 22px rgba(145, 132, 217, 0.35);
 }
 
 .confirmButton:disabled {
   opacity: 0.6;
   cursor: default;
+  box-shadow: none;
 }

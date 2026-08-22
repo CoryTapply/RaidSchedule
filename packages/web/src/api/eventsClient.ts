@@ -40,3 +40,25 @@ export async function confirmCustomEvent(id: string, signal?: AbortSignal): Prom
   }
   return (await res.json()) as RaidEvent;
 }
+
+export interface SetHordeTagResult {
+  raidHelperEventId: string;
+  isHorde: boolean;
+}
+
+export async function setHordeTag(
+  raidHelperEventId: string,
+  isHorde: boolean,
+  signal?: AbortSignal,
+): Promise<SetHordeTagResult> {
+  const res = await fetch(`/api/raid-helper-events/${encodeURIComponent(raidHelperEventId)}/horde`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isHorde }),
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to update Horde tag (${res.status})`);
+  }
+  return (await res.json()) as SetHordeTagResult;
+}

@@ -15,6 +15,9 @@ export interface EventDetailDialogProps {
   onConfirm?: () => void;
   confirming?: boolean;
   confirmError?: string | null;
+  onToggleHorde?: () => void;
+  togglingHorde?: boolean;
+  hordeError?: string | null;
 }
 
 export function EventDetailDialog({
@@ -26,6 +29,9 @@ export function EventDetailDialog({
   onConfirm,
   confirming = false,
   confirmError = null,
+  onToggleHorde,
+  togglingHorde = false,
+  hordeError = null,
 }: EventDetailDialogProps) {
   const color = classColor(event.character.className);
   const isConfirmed = event.status === 'confirmed';
@@ -33,6 +39,7 @@ export function EventDetailDialog({
   const badgeColorClass = isConfirmed ? eventCardStyles.badgeColorConfirmed : eventCardStyles.badgeColorPending;
   const initial = event.character.className === 'Unknown' ? '?' : event.character.className[0];
   const isCustom = event.source === 'custom';
+  const isRaidHelper = event.source === 'raid-helper';
   const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   return (
@@ -61,6 +68,10 @@ export function EventDetailDialog({
             <span className={styles.statusLabel}>{event.status === 'confirmed' ? 'Roster confirmed' : 'Signed up'}</span>
           </div>
         </div>
+        <div className={styles.factionRow}>
+          <span className={`${styles.factionBar} ${event.isHorde ? styles.factionBarHorde : styles.factionBarAlliance}`} />
+          <span>{event.isHorde ? 'Horde' : 'Alliance'}</span>
+        </div>
         {isCustom && (
           <div className={styles.footer}>
             {(confirmError ?? deleteError) && (
@@ -80,6 +91,18 @@ export function EventDetailDialog({
               disabled={deleting}
             >
               {deleting ? 'Deleting…' : confirmingDelete ? 'Confirm delete' : 'Delete event'}
+            </button>
+          </div>
+        )}
+        {isRaidHelper && onToggleHorde && (
+          <div className={styles.footer}>
+            {hordeError && (
+              <span className={styles.deleteError} role="alert">
+                {hordeError}
+              </span>
+            )}
+            <button type="button" className={styles.confirmButton} onClick={onToggleHorde} disabled={togglingHorde}>
+              {togglingHorde ? 'Updating…' : event.isHorde ? 'Remove Horde tag' : 'Mark as Horde'}
             </button>
           </div>
         )}

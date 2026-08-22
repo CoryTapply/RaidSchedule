@@ -1,103 +1,132 @@
-.card {
-  cursor: pointer;
-  border-radius: var(--card-radius);
-  padding: var(--card-pad-y) var(--card-pad-x);
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--card-gap);
-}
-
 /*
  * The two color-mix() formulas below are pinned to sRGB as static CSS —
  * per the design doc, mixing "in oklch" here drags every fill toward the
  * neutral's own hue (an orange Druid card renders purple). Only the raw
- * class hex (--class-color) varies per card, via inline style.
+ * class hex (--class-color) varies per card/badge, via inline style.
+ *
+ * .confirmed/.pending are color-only (border/background/shadow) so they're
+ * shared as-is between the absolutely-positioned timeline .block below and
+ * the detail dialog's non-positioned .characterCard.
  */
-.pending {
-  border: 1px solid color-mix(in srgb, var(--class-color) 60%, transparent);
-  background:
-    repeating-linear-gradient(
-      45deg,
-      color-mix(in srgb, var(--class-color) 26%, transparent) 0 5px,
-      transparent 5px 10px
-    ),
-    var(--color-neutral-800);
-  color: var(--color-neutral-100);
-}
-
 .confirmed {
-  border: var(--confirmed-border-width) solid var(--class-color);
-  background: color-mix(in srgb, var(--class-color) 30%, var(--color-neutral-800));
-  color: var(--color-text);
+  border: 1px solid color-mix(in srgb, var(--class-color) 62%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--class-color) 46%, transparent) 0%,
+    color-mix(in srgb, var(--class-color) 16%, transparent) 58%,
+    rgba(20, 15, 48, 0.55) 100%
+  );
+  box-shadow: 0 6px 18px rgba(4, 2, 14, 0.45), 0 0 16px color-mix(in srgb, var(--class-color) 24%, transparent);
 }
 
-.topRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-}
-
-.badge {
-  width: var(--badge-size);
-  height: var(--badge-size);
-  border-radius: var(--badge-radius);
-  font: 600 var(--badge-font) var(--font-body);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+.pending {
+  border: 1px solid color-mix(in srgb, var(--class-color) 30%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--class-color) 20%, transparent) 0%, rgba(20, 15, 48, 0.42) 70%);
+  box-shadow: 0 4px 14px rgba(4, 2, 14, 0.35);
 }
 
 /*
- * Color-only (no sizing) so these compose safely with a differently-sized
- * .badge class from another module (e.g. the dialog's larger badge) without
- * a specificity conflict over width/height/border-radius.
+ * Color-only (no sizing) so these compose safely with the dialog's own
+ * badge-sizing class without a specificity collision over width/height.
  */
 .badgeColorPending {
-  background: color-mix(in srgb, var(--class-color) 45%, var(--color-neutral-800));
+  background: linear-gradient(140deg, color-mix(in srgb, var(--class-color) 40%, transparent), rgba(20, 15, 48, 0.6));
   color: var(--class-color);
 }
 
 .badgeColorConfirmed {
-  background: var(--class-color);
-  color: #161826;
+  background: linear-gradient(140deg, var(--class-color), color-mix(in srgb, var(--class-color) 55%, #1a1240));
+  color: #0d0a22;
 }
 
-.hordeIcon {
-  margin-top: 10px;
-  width: 30px;
-  height: 30px;
-  max-width: fit-content;
-  /* object-fit: contain; */
-  filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.8));
+/* The timeline event block — position/size come from TimelinePlacement via
+   --top-hours/--height-hours/--lane-index/--lane-count, converted to px by
+   the row's own --pad-top/--px-per-hour (see calendar.module.css). The +1px
+   top offset and the -3px trimmed off height leave a hairline of breathing
+   room between stacked events, per the design doc. */
+.block {
+  position: absolute;
+  top: calc(var(--pad-top) + var(--top-hours) * var(--px-per-hour) + 1px);
+  height: calc(max(22px, var(--height-hours) * var(--px-per-hour)) - 3px);
+  left: calc(3px + (var(--lane-index) / var(--lane-count)) * 100%);
+  width: calc(100% / var(--lane-count) - 6px);
+  box-sizing: border-box;
+  cursor: pointer;
+  border-radius: 9px;
+  padding: var(--event-pad-y) var(--event-pad-x);
+  backdrop-filter: blur(6px);
+  overflow: hidden;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  outline: none;
+  transition: transform 0.16s, box-shadow 0.16s;
+}
+
+.block:hover,
+.block:focus-visible {
+  transform: translateY(-1px);
+}
+
+.block:focus-visible {
+  box-shadow: 0 0 0 2px #9184d9;
+}
+
+.rail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 9px 0 0 9px;
+}
+
+.confirmed .rail {
+  width: 3px;
+  background: linear-gradient(180deg, var(--class-color), color-mix(in srgb, var(--class-color) 35%, transparent));
+}
+
+.pending .rail {
+  width: 1.5px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--class-color) 55%, transparent), color-mix(in srgb, var(--class-color) 12%, transparent));
+}
+
+.hordeMark {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: var(--mark-size);
+  height: var(--mark-size);
+  background: #ff5a5a;
+  opacity: 0.68;
+  mask: url('../assets/horde-icon.svg') no-repeat center / contain;
+  -webkit-mask: url('../assets/horde-icon.svg') no-repeat center / contain;
+  pointer-events: none;
 }
 
 .raidName {
-  font: 500 var(--raidname-size) var(--font-body);
+  position: relative;
+  padding-left: 5px;
+  font: 500 var(--event-raidname-font) var(--font-body);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.metaRow {
-  font: 400 var(--meta-size) var(--font-body);
-  color: var(--color-neutral-300);
-  padding-left: calc(var(--badge-size) + 6px);
+.confirmed .raidName {
+  color: #f6f4ff;
+}
+
+.pending .raidName {
+  color: rgba(246, 244, 255, 0.9);
+}
+
+.metaLine {
+  position: relative;
+  padding-left: 5px;
+  font: 400 var(--event-meta-font) var(--font-body);
+  color: rgba(226, 222, 255, 0.62);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
-
-.metaDot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: var(--color-neutral-500);
-  flex-shrink: 0;
-}
-

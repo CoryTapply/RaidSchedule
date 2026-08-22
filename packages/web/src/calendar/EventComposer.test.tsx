@@ -85,14 +85,13 @@ describe('EventComposer', () => {
 
   it('shows Druid selected by default', () => {
     render(<EventComposer composer={makeComposer()} onChange={vi.fn()} onCancel={vi.fn()} onSave={vi.fn()} />);
-    expect(screen.getByRole('button', { name: 'Druid' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Mage' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('combobox', { name: 'Class' })).toHaveValue('Druid');
   });
 
-  it('calls onChange with the picked class when a class option is clicked', async () => {
+  it('calls onChange with the picked class when a new class is selected', async () => {
     const onChange = vi.fn();
     render(<EventComposer composer={makeComposer()} onChange={onChange} onCancel={vi.fn()} onSave={vi.fn()} />);
-    await userEvent.click(screen.getByRole('button', { name: 'Mage' }));
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Class' }), 'Mage');
     expect(onChange).toHaveBeenCalledWith({ cls: 'Mage' });
   });
 
@@ -191,7 +190,7 @@ describe('EventComposer', () => {
     expect(onChange).toHaveBeenCalledWith({ status: 'confirmed' });
   });
 
-  it('does not call onSave when Enter is pressed on a class option button', async () => {
+  it('does not call onSave when Enter is pressed on a status option button', async () => {
     const onSave = vi.fn();
     const onChange = vi.fn();
     render(
@@ -202,7 +201,7 @@ describe('EventComposer', () => {
         onSave={onSave}
       />,
     );
-    screen.getByRole('button', { name: 'Mage' }).focus();
+    screen.getByRole('button', { name: 'Tentative' }).focus();
     await userEvent.keyboard('{Enter}');
     expect(onSave).not.toHaveBeenCalled();
   });

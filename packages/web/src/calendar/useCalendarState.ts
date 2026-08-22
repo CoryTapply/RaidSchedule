@@ -1,6 +1,6 @@
 import { addDays, buildWindow, dateKey, groupEventsByDateKey, lockoutStart, startOfWeekSunday, type RaidEvent } from '@raidschedule/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { confirmCustomEvent, createCustomEvent, deleteCustomEvent } from '../api/eventsClient.js';
+import { confirmCustomEvent, createCustomEvent, deleteCustomEvent, setHordeTag } from '../api/eventsClient.js';
 import { getStoredClass, localDateTimeToIso, setStoredClass, type ComposerState } from './composer.js';
 import { composerDateLabel } from './format.js';
 
@@ -25,6 +25,8 @@ export interface CalendarState {
   deleteError: string | null;
   confirmingEvent: boolean;
   confirmError: string | null;
+  togglingHorde: boolean;
+  hordeError: string | null;
   composer: ComposerState | null;
   goPrev: () => void;
   goNext: () => void;
@@ -33,6 +35,7 @@ export interface CalendarState {
   closeDialog: () => void;
   deleteSelectedEvent: () => void;
   confirmSelectedEvent: () => void;
+  toggleHordeSelectedEvent: () => void;
   setHoverWeek: (key: string) => void;
   clearHoverWeek: () => void;
   openComposer: (day: CalendarDay, e: { clientX: number; clientY: number }) => void;
@@ -53,6 +56,9 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [confirmingEvent, setConfirmingEvent] = useState(false);
   const [confirmError, setConfirmError] = useState<string | null>(null);
+  const [hordeOverrides, setHordeOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
+  const [togglingHorde, setTogglingHorde] = useState(false);
+  const [hordeError, setHordeError] = useState<string | null>(null);
 
   const goPrev = useCallback(() => setAnchor((d) => addDays(d, -7)), []);
   const goNext = useCallback(() => setAnchor((d) => addDays(d, 7)), []);
@@ -60,12 +66,14 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
   const selectEvent = useCallback((event: RaidEvent) => {
     setDeleteError(null);
     setConfirmError(null);
+    setHordeError(null);
     setSelectedEvent(event);
   }, []);
   const closeDialog = useCallback(() => {
     setSelectedEvent(null);
     setDeleteError(null);
     setConfirmError(null);
+    setHordeError(null);
   }, []);
   const setHoverWeek = useCallback((key: string) => setHoverLockoutKey(key), []);
   const clearHoverWeek = useCallback(() => setHoverLockoutKey(null), []);
@@ -108,10 +116,33 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     })();
   }, [selectedEvent, confirmingEvent]);
 
+  const toggleHordeSelectedEvent = useCallback(() => {
+    if (!selectedEvent || selectedEvent.source !== 'raid-helper' || !selectedEvent.raidHelperEventId || togglingHorde) return;
+    const target = selectedEvent;
+    const raidHelperEventId = target.raidHelperEventId!;
+    const nextIsHorde = !target.isHorde;
+    setTogglingHorde(true);
+    setHordeError(null);
+    void (async () => {
+      try {
+        await setHordeTag(raidHelperEventId, nextIsHorde);
+        setHordeOverrides((prev) => new Map(prev).set(raidHelperEventId, nextIsHorde));
+        setSelectedEvent((current) =>
+          current && current.raidHelperEventId === raidHelperEventId ? { ...current, isHorde: nextIsHorde } : current,
+        );
+      } catch (err) {
+        setHordeError(err instanceof Error ? err.message : 'Failed to update Horde tag');
+      } finally {
+        setTogglingHorde(false);
+      }
+    })();
+  }, [selectedEvent, togglingHorde]);
+
   const openComposer = useCallback((day: CalendarDay, e: { clientX: number; clientY: number }) => {
     setSelectedEvent(null);
     setDeleteError(null);
     setConfirmError(null);
+    setHordeError(null);
     const x = Math.max(8, Math.min(e.clientX, window.innerWidth - 320));
     const y = Math.max(8, Math.min(e.clientY, window.innerHeight - 500));
     setComposer({
@@ -174,7 +205,12 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     const eventsByDay = groupEventsByDateKey(
       [...events, ...custom]
         .filter((e) => !deletedIds.has(e.id))
-        .map((e) => (confirmedIds.has(e.id) ? { ...e, status: 'confirmed' as const } : e)),
+        .map((e) => (confirmedIds.has(e.id) ? { ...e, status: 'confirmed' as const } : e))
+        .map((e) =>
+          e.raidHelperEventId && hordeOverrides.has(e.raidHelperEventId)
+            ? { ...e, isHorde: hordeOverrides.get(e.raidHelperEventId) }
+            : e,
+        ),
     );
 
     return buildWindow(anchor, 21).map((date): CalendarDay => {
@@ -191,7 +227,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
         lockoutWeekKey,
       };
     });
-  }, [anchor, events, custom, deletedIds, confirmedIds, hoverLockoutKey]);
+  }, [anchor, events, custom, deletedIds, confirmedIds, hordeOverrides, hoverLockoutKey]);
 
   const rangeEnd = useMemo(() => addDays(anchor, 20), [anchor]);
 
@@ -205,6 +241,8 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     deleteError,
     confirmingEvent,
     confirmError,
+    togglingHorde,
+    hordeError,
     composer,
     goPrev,
     goNext,
@@ -213,6 +251,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     closeDialog,
     deleteSelectedEvent,
     confirmSelectedEvent,
+    toggleHordeSelectedEvent,
     setHoverWeek,
     clearHoverWeek,
     openComposer,

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CreateCustomEventInput, RaidEvent, RosterStatus, WowClass } from '@raidschedule/shared';
+import { isHordeTitle, type CreateCustomEventInput, type RaidEvent, type RosterStatus, type WowClass } from '@raidschedule/shared';
 import type Database from 'better-sqlite3';
 
 interface CustomEventRow {
@@ -26,6 +26,7 @@ function rowToRaidEvent(row: CustomEventRow): RaidEvent {
       className: row.character_class_name,
       spec: row.character_spec ?? undefined,
     },
+    isHorde: isHordeTitle(row.raid_name),
   };
 }
 

@@ -99,23 +99,20 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
 
           <div className={styles.field}>
             <span className={styles.label}>Class</span>
-            <div className={styles.classGrid}>
-              {WOW_CLASSES.map((cls: WowClass) => {
-                const selected = cls === composer.cls;
-                return (
-                  <button
-                    key={cls}
-                    type="button"
-                    className={`${styles.classOption} ${selected ? styles.classOptionSelected : ''}`}
-                    style={{ '--class-color': classColor(cls) } as CSSProperties}
-                    onClick={() => onChange({ cls })}
-                    aria-pressed={selected}
-                  >
-                    <span className={styles.classChip} />
-                    <span className={styles.className}>{cls}</span>
-                  </button>
-                );
-              })}
+            <div className={styles.characterRow}>
+              <span className={styles.chip} style={{ '--class-color': characterColor } as CSSProperties} />
+              <select
+                className={styles.input}
+                aria-label="Class"
+                value={composer.cls}
+                onChange={(e) => onChange({ cls: e.target.value as WowClass })}
+              >
+                {WOW_CLASSES.map((cls: WowClass) => (
+                  <option key={cls} value={cls}>
+                    {cls}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 

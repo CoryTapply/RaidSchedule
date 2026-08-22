@@ -1,218 +1,265 @@
-# Handoff: WoW Raid Calendar
+# Handoff: Raid Calendar — Nebula (timeline rows)
 
 ## Overview
+A three-week raid calendar for a World of Warcraft guild. Each week is a row of seven day
+columns, and the vertical space inside each column is an **hourly timeline**: events are
+positioned and sized by their real start/end times instead of being listed as chips. The
+"Nebula" visual pass restyles the earlier flat version with a space-themed ground,
+translucent glass surfaces, gradients and blurs, while keeping WoW class colors intact as
+the primary way to identify an event's owner.
 
-A calendar view for tracking World of Warcraft raid signups across multiple characters. It shows a fixed rolling three-week window (Sunday → Saturday, 21 days), with raid events color-coded by the class of the character signed up. Two signup states are visually distinct: *signed up* (pending) and *roster confirmed*. The current raid lockout week (Tuesday → Monday) is highlighted, and hovering any day moves that highlight to the lockout week the hovered day belongs to. Right-clicking a day opens a create-event popup at the cursor (one-time events only for now).
+Two things are new since the last handoff:
+1. **Per-row hourly timeline** (the layout model described under *Timeline model*).
+2. **The Nebula visual language** (gradients, transparency, blur, starfield ground).
 
 ## About the Design Files
+The files in this bundle are **design references created in HTML** — prototypes that show
+intended look and behavior. They are not production code to copy directly. The task is to
+**recreate these designs in the target codebase's existing environment** (React, Vue,
+SwiftUI, native, etc.) using its established patterns, component library and state
+management. If no environment exists yet, pick the framework that best suits the project
+and implement the designs there.
 
-The files in this bundle are **design references created in HTML** — prototypes showing intended look and behavior, not production code to copy directly. The task is to **recreate these designs in the target codebase's existing environment** (React, Vue, Svelte, etc.) using its established component patterns, styling approach, and state libraries. If the web app has no established environment yet, pick the framework that best fits the project and implement there.
-
-The HTML files use a small custom template runtime (`support.js`) that is not part of the design and should not be ported. Read the markup for structure and the embedded `<script>` class for logic; reimplement both idiomatically.
+The prototype uses a small internal template runtime (`support.js`) — ignore it. Read the
+markup and the logic class inside `Raid Calendar Nebula.dc.html` for structure, styling
+and behavior, and reimplement both idiomatically.
 
 ## Fidelity
+**High fidelity.** Colors, gradients, type sizes, spacing and the timeline geometry are
+final. Recreate the UI closely, substituting the codebase's own primitives where they
+exist. The one deliberately loose area is the event **content density** inside very narrow
+lanes — see *Known constraints*.
 
-**High-fidelity.** Colors, typography, spacing, borders, and interaction states are final. Recreate the UI faithfully using the codebase's libraries. The one open area is data: all events are hardcoded seed data and must be replaced with a real source.
+---
+
+## Timeline model (the core of this design)
+
+Geometry constants:
+
+| Constant | Value | Meaning |
+| --- | --- | --- |
+| `PX_PER_HOUR` | `30` | vertical scale of the timeline |
+| `PAD_TOP` | `16` | px reserved above the first hour line, so the day number has room |
+| `DEFAULT_START_H` | `17` | default first hour shown in a row (5 PM) |
+| `DEFAULT_END_H` | `24` | default last hour shown in a row (12 AM) |
+
+Rules:
+
+1. **Each week row computes its own visible hour window, independently of other rows.**
+   Start from the default window (5 PM – 12 AM). Then, for every event in any of that row's
+   seven days, widen the window: `startH = min(startH, floor(event.startMin / 60))` and
+   `endH = max(endH, ceil(event.endMin / 60))`. A row with an 11 AM event therefore shows
+   11 AM – 12 AM while the other two rows stay at 5 PM – 12 AM.
+2. **Row height** = `(endH - startH) * PX_PER_HOUR + PAD_TOP + 10` px. All seven day cells
+   and the left time gutter in a row share that height.
+3. **Hour lines** are drawn at `PAD_TOP + ((h * 60) - startMin) / 60 * PX_PER_HOUR` px for
+   every whole hour from `startH` through `endH`, inclusive. The same positions are used
+   for the gutter labels (vertically centered on the line via `translateY(-50%)`).
+4. **Event position**: `top = PAD_TOP + ((startMin - rowStartMin) / 60) * PX_PER_HOUR + 1`px;
+   `height = max(22, ((min(endMin, rowEndMin) - startMin) / 60) * PX_PER_HOUR) - 3`px.
+   The +1/-3 leave a hairline of breathing room between stacked events.
+5. **Overlap lanes**: within one day, sort events by start then end, and greedily group them
+   into clusters where each event starts before the running max end of the cluster. Every
+   event in a cluster of size `n` gets `left: calc(3px + (i / n) * 100%)` and
+   `width: calc(100% / n - 6px)`, i.e. equal side-by-side lanes. Non-overlapping events
+   occupy the full column width.
+6. Day cells clip their contents (`overflow: hidden`).
+
+### Grid structure
+`grid-template-columns: 58px repeat(7, minmax(0, 1fr))` — a 58px time gutter, then seven
+equal day columns. One header grid (weekday names) plus one grid per week row, all inside a
+single rounded glass panel. Weekday header labels are Sun–Sat, uppercase, 11px/500,
+letter-spacing .08em, `rgba(214,208,255,.66)`.
+
+### Left time gutter
+Background `linear-gradient(180deg, rgba(12,9,32,.5), rgba(12,9,32,.18))`; labels 10.5px/400
+`rgba(206,199,255,.45)`, right-aligned 8px from the edge, formatted "5 PM", "12 AM".
+
+---
 
 ## Screens / Views
 
-### 1. Raid Calendar — standard desktop (`Raid Calendar.dc.html`)
+### 1. Calendar (the only screen)
 
-**Purpose:** the default view. See which raids are on which nights, which character is signed up, and whether the roster is locked in.
+**Header row** — space-between, wraps.
+- Title "Raid Calendar", 24px/1.2, heading font, weight 500, filled with
+  `linear-gradient(92deg,#ffffff 0%,#c9b8ff 45%,#f7a8e8 100%)` clipped to the text.
+- Subtitle: the visible date range, e.g. "August 16 – September 5, 2026", 13px/400,
+  `rgba(214,208,255,.6)`.
+- Right side: two 36px square glass nav buttons (`‹` `›`, radius 10px, border
+  `1px solid rgba(145,132,217,.3)`, background
+  `linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02))`,
+  `backdrop-filter: blur(10px)`; on hover border `rgba(199,184,255,.7)` and background
+  `linear-gradient(180deg,rgba(145,132,217,.28),rgba(145,132,217,.08))`), then a "Today"
+  button, 36px tall, radius 10px, border `1px solid rgba(199,184,255,.55)`, background
+  `linear-gradient(135deg,rgba(145,132,217,.3),rgba(247,168,232,.14))`,
+  `box-shadow: 0 0 18px rgba(145,132,217,.22)` growing to `0 0 26px rgba(145,132,217,.4)`
+  on hover. Transitions .18s.
 
-**Layout**
-- Root: full-height flex column, `padding: var(--space-6)` (28px), `max-width: 1600px`, `max-height: 1100px`, `margin: 0 auto`, `gap: var(--space-4)` (18px). Background `--color-bg`.
-- Header row: flex, `space-between`, wraps. Left = title block (`Raid Calendar`, 22px/500 heading font; date range beneath, 13px/400, `--color-neutral-300`). Right = control cluster, `gap: var(--space-3)`.
-- Weekday header: `display: grid; grid-template-columns: repeat(7, minmax(0, 1fr))`, top + left 1px `--color-neutral-700` borders, top corners rounded `--radius-md`. Each cell: `box-sizing: border-box`, `padding: 10px 12px`, 11px/500, uppercase, `letter-spacing: 0.04em`, `--color-neutral-400`, background `--color-neutral-900`, right + bottom 1px `--color-neutral-700`.
-- Day grid: same 7-column `minmax(0, 1fr)` template (this is what keeps columns identical in width and aligned to the headers), `grid-auto-rows: minmax(150px, 260px)`, `flex: none`, left border 1px, bottom corners rounded.
-- Day cell: `box-sizing: border-box`, `padding: 10px`, `min-width: 0`, `overflow: hidden`, right + bottom 1px `--color-neutral-700`, flex column `gap: 8px`.
-
-**Components**
-
-*Nav buttons (`‹`, `›`)* — 36×36, `border-radius: var(--radius-md)`, 1px `--color-neutral-700`, background `--color-neutral-800`, 16px glyph, `cursor: pointer`. Hover: background `--color-neutral-700`.
-
-*Today button* — height 36, `padding: 0 var(--space-4)`, `border-radius: var(--radius-md)`, 1px `--color-accent-600`, transparent background, 13px/500. Hover: background `--color-accent-800`.
-
-*Day number* — 13px/500. Current day: `--color-accent-300`. Other days: `--color-neutral-300`. On the 1st of a month the label becomes `Aug 1` (abbreviated month + date) instead of a bare number.
-
-*Event card* — `border-radius: var(--radius-sm)`, `padding: 6px 8px`, flex column `gap: 2px`, `min-width: 0`, `cursor: pointer`. Two variants, below. Contents:
-- Row 1: class badge (16×16, `border-radius: 4px`, 9px/600, centered, first letter of class name) + raid name (11.5px/500, single line, `text-overflow: ellipsis`).
-- Row 2: `8:00 PM · Windrunner` — 11px/400, `--color-neutral-300`, `padding-left: 22px` to align under the raid name, ellipsis-truncated.
-
-*Create-event popup* — see the dedicated section below.
-
-*Event detail dialog* — fixed full-screen backdrop `rgba(0,0,0,0.5)`, centered panel: width 340, background `--color-neutral-800`, 1px `--color-neutral-700`, `border-radius: var(--radius-lg)`, `box-shadow: var(--shadow-lg)`, `padding: var(--space-5)`, flex column `gap: var(--space-4)`. Contains raid name (16px/500 heading), `August 18, 2026 · 8:00 PM` (12px/400 muted), a card-styled character block matching the event's own border/background treatment (28×28 badge, character · class at 13px/500, status label at 12px muted), a `Difficulty: Heroic` line, and a 28×28 `×` close button.
-
-### 2. Raid Calendar — 4K / large display (`Raid Calendar 4K.dc.html`)
-
-**Purpose:** the same view at 4K with 125% OS scaling (≈3072×1728 CSS px). Not a separate feature — treat it as the upper end of the responsive range.
-
-Differences from the standard view:
-- Root is a 3072×1728 canvas; the calendar column is `max-width: 2200px`, `max-height: 1500px`, `margin: 0 auto`, `padding: 36px 44px 44px`, `gap: 28px`.
-- Weekday headers spell full day names (`Sunday`…`Saturday`), 15px/500 uppercase, `padding: 16px 20px`.
-- `grid-auto-rows: minmax(240px, 1fr)`, `min-height: 0`. Day cells `padding: 18px`, `gap: 14px`.
-- Day number 22px/500, with a small note beside it (14px/400, `--color-neutral-500`): `reset` on Tuesdays, `today` on the current day.
-- Event card: `border-radius: var(--radius-md)`, `padding: 14px 16px`, `gap: 8px`. Badge 30×30 (`border-radius: 7px`, 14px/600). Raid name 18px/500. A metadata row (time 15px `--color-neutral-200`, a 4px dot separator `--color-neutral-500`, character 15px `--color-neutral-300`), then a status row: difficulty (13px/500 uppercase, `letter-spacing: 0.04em`, `--color-neutral-400`) + status (same type, colored — the class color when confirmed, `--color-neutral-400` when pending).
-- Dialog scales up: width 520, `padding: 32px`, title 24px, badge 44×44.
-
-### 3. Class Colors reference (`Class Colors.dc.html`)
-
-**Purpose:** internal reference sheet, not an app screen. All 13 class colors shown in both event states. Use it to verify the palette and the two card treatments during implementation.
-
-Layout: `max-width: 1100px` centered, `display: grid; grid-template-columns: 120px minmax(0,1fr) minmax(0,1fr); gap: 12px 20px`. Column headers `Class / Signed up / Roster confirmed` (11px/500 uppercase, `--color-neutral-400`). Each row is a 10px color dot + class name, then the same event card rendered in each variant.
-
-## Event card variants
-
-This is the core visual rule of the design. `$color` is the class color of the character signed up.
-
-**Signed up (pending roster)** — diagonal hatch, thin border:
-```css
-border: 1px solid color-mix(in srgb, $color 60%, transparent);
-background:
-  repeating-linear-gradient(45deg,
-    color-mix(in srgb, $color 26%, transparent) 0 5px,
-    transparent 5px 10px),
-  var(--color-neutral-800);
-color: var(--color-neutral-100);
-/* badge */ background: color-mix(in srgb, $color 45%, var(--color-neutral-800)); color: $color;
+**Page ground** (nebula) — layered, non-scrolling:
 ```
-(4K view uses a `0 7px / 7px 14px` stripe period instead of `0 5px / 5px 10px`.)
-
-**Roster confirmed** — solid tinted fill, border bolder than the fill:
-```css
-border: 2px solid $color;            /* 3px in the 4K view */
-background: color-mix(in srgb, $color 30%, var(--color-neutral-800));
-color: var(--color-text);
-/* badge */ background: $color; color: #161826;
+radial-gradient(120% 80% at 12% -10%, #2b1b6b 0%, rgba(43,27,107,0) 55%),
+radial-gradient(90% 70% at 88% 8%, #4a2a7a 0%, rgba(74,42,122,0) 50%),
+radial-gradient(140% 100% at 60% 110%, #6b2b6b 0%, rgba(107,43,107,0) 45%),
+linear-gradient(180deg,#0a0720 0%,#07051a 60%,#050410 100%)
 ```
+Over it, a non-interactive starfield layer at `opacity: .5` built from ten 1–1.5px
+`radial-gradient` dots at fixed percentage positions (#fff, #cfc9ff, #bfe0ff). Body
+background `#06040f`. Content column `max-width: 1600px`, centered, `padding: var(--space-6)`.
 
-⚠️ Mix in **sRGB**, not OKLCH. `color-mix(in oklch, …)` interpolates hue toward the neutral's own hue and turns every fill mauve — orange Druid cards came out purple. If the target codebase uses a color utility (chroma.js, culori, Tailwind's `color-mix`), pin it to sRGB or precompute the 13 fills as static hex values.
+**Grid panel** — radius 16px, `border: 1px solid rgba(145,132,217,.22)`, background
+`linear-gradient(180deg,rgba(20,15,48,.62),rgba(10,8,26,.5))`, `backdrop-filter: blur(18px)`,
+`box-shadow: 0 24px 70px rgba(4,2,14,.6), inset 0 1px 0 rgba(255,255,255,.06)`. The header
+strip inside it is `linear-gradient(180deg,rgba(145,132,217,.14),rgba(145,132,217,.03))`.
+Cell borders: right/bottom `1px solid rgba(145,132,217,.12)` (.14/.18 in the header strip).
+Hour rules inside day cells are 1px,
+`linear-gradient(90deg,rgba(145,132,217,.03),rgba(145,132,217,.14),rgba(145,132,217,.03))`
+— they fade at both ends rather than stopping hard.
 
-**Lockout-week highlight** — applied to every day cell in the active lockout week:
-```css
-background: color-mix(in oklch, var(--color-accent-500) 12%, var(--color-neutral-900));
-border-top: 2px solid var(--color-accent-500);   /* vs 1px solid var(--color-neutral-700) */
-```
-Non-highlighted cells: `background: var(--color-neutral-900)`. (The accent mix here is intentionally OKLCH — it is a single fixed accent tint, not a per-class hue.)
+**Day cell**
+- Base background `linear-gradient(180deg, rgba(255,255,255,.028), rgba(255,255,255,.008))`.
+- Day number: a small pill at top 3px / left 5px, padding 1px 5px, radius 6px, 11.5px/500,
+  `rgba(206,199,255,.55)` on a transparent ground. On the 1st of a month the label reads
+  "Sep 1" instead of "1".
+- **Today** gets the pill filled: text `#ffe7fa`, background
+  `linear-gradient(135deg,rgba(247,168,232,.34),rgba(201,184,255,.18))`, and
+  `box-shadow: 0 0 12px rgba(247,168,232,.35), inset 0 0 0 1px rgba(247,168,232,.5)` —
+  the one saturated accent in the grid.
+- **Lockout-week highlight** (see *Interactions*): background
+  `linear-gradient(180deg, rgba(145,132,217,.10), rgba(145,132,217,.025))` plus
+  `box-shadow: inset 0 1px 0 0 rgba(199,184,255,.24), inset 0 0 34px rgba(145,132,217,.06)`.
+  Deliberately subtle. `transition: background .2s`.
 
-## Create-event popup (`Raid Calendar.dc.html`)
+**Event block**
+- Absolutely positioned per *Timeline model*. Radius 9px, padding 5px 7px,
+  `backdrop-filter: blur(6px)`, `overflow: hidden`, `z-index: 2`,
+  `transition: transform .16s, box-shadow .16s`; hover `translateY(-1px)`.
+- **Left rail** = class color: absolutely positioned, full height, radius 9px 0 0 9px.
+  3px wide for confirmed events, 1.5px for signed-up ones. Content is padded 5px from it.
+- Line 1: raid name, 11px/500, `#f6f4ff` (confirmed) or `rgba(246,244,255,.9)`
+  (signed up), single line with ellipsis.
+- Line 2: `"8:00 PM – 11:00 PM · Thrashclaw"`, 10px/400, `rgba(226,222,255,.62)`, ellipsis.
+- **Horde mark**: 30px square in the bottom-right corner (right 2px, bottom 2px), the
+  uploaded `horde-icon.svg` used as a CSS `mask` over a `#ff5a5a` fill at
+  `opacity: .28`, `pointer-events: none`. Shown on Horde events only; Alliance events get
+  no faction decoration.
 
-**Trigger:** `contextmenu` on a day cell. Suppress the native browser menu (`preventDefault`) and stop propagation. The popup opens anchored to the cursor and closes any open detail dialog.
+**Event status treatments** — `color` below is the class color:
 
-**Positioning:** `position: fixed` inside a full-screen `inset: 0` overlay at `z-index: 60` (transparent — it exists only to catch outside clicks). Panel `left = clamp(8, clientX, viewportWidth − 320)`, `top = clamp(8, clientY, viewportHeight − 500)`, so it never runs off-screen near the right or bottom edge.
+| | Confirmed | Signed up (tentative) |
+| --- | --- | --- |
+| border | `1px solid color-mix(in srgb, color 62%, transparent)` | `1px solid color-mix(in srgb, color 30%, transparent)` |
+| background | `linear-gradient(135deg, color-mix(in srgb, color 46%, transparent) 0%, color-mix(in srgb, color 16%, transparent) 58%, rgba(20,15,48,.55) 100%)` | `linear-gradient(135deg, color-mix(in srgb, color 20%, transparent) 0%, rgba(20,15,48,.42) 70%)` |
+| rail | `linear-gradient(180deg, color, color-mix(in srgb, color 35%, transparent))`, 3px | `linear-gradient(180deg, color-mix(in srgb, color 55%, transparent), color-mix(in srgb, color 12%, transparent))`, 1.5px |
+| shadow | `0 6px 18px rgba(4,2,14,.45), 0 0 16px color-mix(in srgb, color 24%, transparent)` | `0 4px 14px rgba(4,2,14,.35)` |
 
-**Panel:** width 312, background `--color-neutral-800`, 1px `--color-neutral-700`, `border-radius: var(--radius-lg)`, `box-shadow: var(--shadow-lg)`, flex column. Three bands separated by 1px `--color-neutral-700` rules:
+Signed-up events used to be dashed; they are intentionally **not** dashed now — the
+distinction is weight and opacity only.
 
-1. *Header* — `padding: var(--space-3) var(--space-4)`. Title `New event` (13.5px/500 heading font) over the full date of the clicked day, `Tue, August 18, 2026` (11.5px/400, `--color-neutral-300`). Right: 24×24 `×` button, `border-radius: var(--radius-sm)`, 1px `--color-neutral-700`, transparent; hover background `--color-neutral-700`, color `--color-text`.
-2. *Body* — `padding: var(--space-4)`, flex column `gap: var(--space-3)`. Fields in order: **Title** (full width, autofocused, placeholder `Nerub-ar Palace`), **Start** / **End** side by side (`grid-template-columns: 1fr 1fr`, `gap: var(--space-3)`, native `time` inputs), **Character** (8×8 class-color chip, `border-radius: 2px`, then the text input; placeholder `Character name`), **Class** (13 options in a 2-column grid, `gap: 4px`). Closing line: a 5px `--color-neutral-600` dot + `One-time event` (11px/400, `--color-neutral-400`).
-3. *Footer* — `padding: var(--space-3) var(--space-4)`, right-aligned, `gap: var(--space-2)`. **Cancel**: height 30, `padding: 0 var(--space-3)`, `border-radius: var(--radius-sm)`, 1px `--color-neutral-700`, transparent, 12px/500 `--color-neutral-200`; hover background `--color-neutral-700`. **Add event**: height 30, `padding: 0 var(--space-4)`, 1px `--color-accent-600`; enabled = background `--color-accent-800`, `--color-text`; disabled = transparent, `--color-neutral-400`, `opacity: 0.5`, `cursor: not-allowed`. Hover (enabled) background `--color-accent-800`.
+### 2. Event detail dialog
+Opens on clicking an event. Backdrop `rgba(6,4,15,.62)` with `backdrop-filter: blur(6px)`,
+centered card 352px wide, radius 18px, background
+`linear-gradient(160deg,rgba(36,26,84,.9),rgba(14,10,34,.92))`, border
+`1px solid rgba(167,152,240,.34)`, `backdrop-filter: blur(22px)`,
+`box-shadow: 0 30px 80px rgba(3,2,10,.7), inset 0 1px 0 rgba(255,255,255,.07)`.
+Contents: raid name (16px/500), date + time line (12px, `rgba(214,208,255,.62)`), a 28px
+close button, a tinted row repeating the event's own border/background/shadow with a 28px
+class-color badge and `"Character · Class"` plus a status line ("Roster confirmed" /
+"Signed up"), then "Difficulty: …" and a faction line — a 16×3px faction bar
+(Horde `linear-gradient(90deg,#ff4b4b,rgba(255,75,75,.25))`, Alliance
+`linear-gradient(90deg,#5aa8ff,rgba(90,168,255,.25))`, with a matching `0 0 8px` glow)
+followed by the faction name.
 
-**Field style** (all inputs): `height: 32px`, `padding: 0 8px`, `border-radius: var(--radius-sm)`, 1px `--color-neutral-700`, background `--color-neutral-900`, 12.5px/400 `--color-text`, `color-scheme: dark` (so native time pickers render dark), placeholder `--color-neutral-500`, `box-sizing: border-box`. Focus: `outline: 2px solid var(--color-accent); outline-offset: 1px`. Labels above each field: 10.5px/500, uppercase, `letter-spacing: 0.05em`, `--color-neutral-400`, 5px gap.
+### 3. New-event composer (right-click a day)
+A 312px popover anchored at the cursor (clamped to the viewport: x ≤ `innerWidth - 320`,
+y ≤ `innerHeight - 500`, min 8px), same glass treatment as the dialog at radius 16px, over
+a full-screen transparent click-catcher that dismisses it. Sections separated by
+`1px solid rgba(145,132,217,.2)`:
+- Header: "New event" + the long date label ("Mon, August 17, 2026"), close button.
+- Fields, each labelled 10.5px/500 uppercase letter-spacing .06em `rgba(196,188,240,.62)`:
+  **Title** (text, autofocus, placeholder "Nerub-ar Palace"), **Start** / **End** (native
+  `time` inputs, two columns, defaults 20:00 / 23:00), **Faction** (two half-width toggle
+  buttons, Horde and Alliance, each with a 3.5×12px color bar; the selected one takes a
+  tinted background — Horde `linear-gradient(135deg,rgba(196,39,45,.4),rgba(139,20,32,.18))`
+  with border `rgba(255,107,107,.75)`, Alliance
+  `linear-gradient(135deg,rgba(26,95,208,.4),rgba(15,63,158,.18))` with border
+  `rgba(120,180,255,.75)`; unselected is `rgba(255,255,255,.04)` with border
+  `rgba(145,132,217,.28)`), **Character** (text) and **Class** (select over all 13 WoW
+  classes), each preceded by an 8px swatch of the chosen class color with a matching
+  `0 0 10px` glow. A muted "One-time event" note closes the body.
+- Footer: "Cancel" (ghost) and "Add event" — disabled at 55% opacity until the title is
+  non-empty, otherwise `linear-gradient(135deg,rgba(145,132,217,.42),rgba(247,168,232,.2))`.
 
-**Class picker option:** `padding: 5px 7px`, `border-radius: var(--radius-sm)`, 11px/500, left-aligned, an 8×8 color chip + the class name (ellipsis-truncated). Unselected: 1px `--color-neutral-700`, background `--color-neutral-900`, text `--color-neutral-300`. Selected: `1px solid $color`, background `color-mix(in srgb, $color 22%, var(--color-neutral-900))`, text `--color-text`. Single-select; default `Druid` (in production, default to the user's main character's class).
+Input styling: 32px tall, radius 8px, background `rgba(12,9,32,.72)`, border
+`1px solid rgba(145,132,217,.28)`, `backdrop-filter: blur(8px)`, text `#eae8ff` at 12.5px,
+placeholder `rgba(234,232,255,.35)`, `color-scheme: dark`, focus ring
+`2px solid #9184d9` at `outline-offset: 1px`.
 
-**Behavior**
-- Defaults on open: empty title, `20:00` start, `23:00` end, empty character, `Druid`.
-- **Add event** is disabled until the title is non-empty (trimmed). Title is the only required field; an empty character name saves as `—`. No other validation — end-before-start is not currently blocked; add that check if the app needs it.
-- Saving appends the event to the clicked day and closes the popup. New events render in the *roster confirmed* treatment and open in the detail dialog like seeded ones (difficulty `Not set`, status label `One-time event`, time shown as `8:00 PM – 11:00 PM`).
-- Dismissal: **Cancel**, the `×`, `Escape`, a click on the overlay outside the panel, or a right-click anywhere outside (which also suppresses the native menu). Clicks inside the panel must not bubble to the overlay.
-- `Escape` closes the popup if it is open, otherwise the detail dialog.
-- Times are stored as 24-hour `HH:MM` and displayed 12-hour with `AM`/`PM`.
-
-**Recurring events:** out of scope for now, but planned. The `One-time event` line in the body is the placeholder for that control — expect it to become a recurrence selector (e.g. *Does not repeat / Weekly on Tuesday / Custom*). Model the event record so a recurrence rule can be added without reshaping it (a nullable `recurrence` field on a single event row rather than exploding instances at create time).
-
-The 4K view does not yet include this popup; scale the same panel proportionally if it is needed there.
+---
 
 ## Interactions & Behavior
-
-- **Prev / next** — shift the 21-day window by exactly 7 days (one week), not three. The window always starts on a Sunday.
-- **Today** — reset the window start to the Sunday of the current week.
-- **Hover a day cell** — set the active lockout week to that day's lockout week (`mouseenter`); on `mouseleave`, fall back to the lockout week containing today. All seven days of the active week highlight together, spanning the row boundary between Monday and Tuesday.
-- **Click an event card** — open the detail dialog for that event.
-- **Dialog dismissal** — click the backdrop or the `×`. Clicks inside the panel must not bubble to the backdrop handler.
-- **Truncation, not reflow** — day columns are locked to equal widths; long raid names ellipsis-truncate. Never let content widen a column.
-- No transitions or animations are specified. Hover feedback is an immediate background change.
-- Keyboard focus: per the design system, `:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }` — never the browser default.
-
-**Not yet designed** (raise before building if needed): overflow when a day has more events than fit its 260px row, editing or deleting an existing event, recurring events (see the popup section), month or agenda views, mobile breakpoint, and the roster list inside the detail dialog (only the viewer's own character is shown today).
+- **Prev / Next** shift the anchor date by ±7 days (one week at a time, three rows stay
+  visible). **Today** snaps the anchor to the Sunday of the current week.
+- **Lockout-week highlight**: WoW's raid lockout resets Tuesday, so a "lockout week" runs
+  Tuesday → Monday and therefore straddles two calendar rows. Compute a day's lockout key
+  as the most recent Tuesday at or before it. By default the lockout week containing today
+  is highlighted; hovering any day cell highlights that day's lockout week instead
+  (`onMouseEnter` sets the key, `onMouseLeave` clears it back to today's).
+- **Click an event** → detail dialog. **Right-click a day** → new-event composer (suppress
+  the native context menu; right-clicking again inside the overlay closes it).
+- **Escape** closes the composer if open, otherwise the dialog. Clicking the backdrop
+  closes either; clicks inside the card stop propagation.
+- Adding an event appends it to local state at the day it was created on, styled as
+  "confirmed" with difficulty "Not set".
+- Hover: nav/Today buttons brighten, event blocks lift 1px.
 
 ## State Management
-
-Three pieces of state:
-
-| State | Type | Purpose |
-| --- | --- | --- |
-| `anchor` | Date (a Sunday, midnight-normalized) | first day of the 21-day window |
-| `composer` | object \| null | the open create-event popup: `{ key, dateLabel, x, y, title, start, end, character, cls }`; `null` = closed |
-| `custom` | array | events created in-session: `{ key, dateLabel, title, start, end, character, cls }` — replace with a real create mutation |
-| `selectedEvent` | Event \| null | which event the dialog shows; `null` = closed |
-| `hoverLockoutKey` | string \| null | date key of the hovered day's lockout-week start; `null` = fall back to the current week |
-
-Derived per render:
-- 21 day objects from `anchor` (`anchor + i` for `i` in `0…20`).
-- Events grouped by date key, then sorted/stacked within each day.
-- `activeLockoutKey = hoverLockoutKey ?? lockoutStart(today)`.
-
-Two date helpers carry all the calendar logic:
-```js
-// first day of the display window: the Sunday on or before d
-function startOfWeekSunday(d) {
-  const x = new Date(d); x.setHours(0,0,0,0);
-  x.setDate(x.getDate() - x.getDay());
-  return x;
-}
-// first day of the raid lockout: the Tuesday on or before d
-function lockoutStart(d) {
-  const x = new Date(d); x.setHours(0,0,0,0);
-  x.setDate(x.getDate() - ((x.getDay() - 2 + 7) % 7));
-  return x;
-}
-```
-Note the deliberate mismatch: the **grid** weeks run Sunday → Saturday, the **lockout** weeks run Tuesday → Monday. A highlighted lockout week therefore always spans two grid rows.
-
-`lockoutStart` hardcodes Tuesday (US reset). If the app serves EU realms, make the reset day and the reset hour configurable and compute in realm time, not browser local time.
-
-**Data fetching:** all events in these prototypes are hardcoded seed data (`EVENT_SEED`, offsets relative to the window start). Replace with a real fetch. Each event needs: date/time, character name, character class, raid name, difficulty, and roster status (`signed_up` | `confirmed`).
+- `anchor` — Date, the Sunday that starts the first visible row.
+- `selectedEvent` — the event shown in the dialog, or null.
+- `hoverLockoutKey` — date key of the hovered lockout week, or null (falls back to today's).
+- `composer` — `{ dayKey, dateLabel, x, y, title, start, end, character, class, faction }`
+  or null.
+- `custom` — user-created events. In production these, and the seeded events, come from
+  the guild's roster/signup API; the prototype hardcodes 13 seed events across three weeks.
 
 ## Design Tokens
 
-All tokens come from the **Nocturne** design system (`_ds/nocturne-.../styles.css`, bundled here). Consume the variables; don't re-derive values. The ones used:
+Class colors (WoW canonical — do not alter):
+Death Knight `#C41E3A`, Demon Hunter `#A330C9`, Druid `#FF7C0A`, Evoker `#33937F`,
+Hunter `#AAD372`, Mage `#3FC7EB`, Monk `#00FF98`, Paladin `#F48CBA`, Priest `#E9E9ED`,
+Rogue `#FFF468`, Shaman `#0070DD`, Warlock `#8788EE`, Warrior `#C69B6D`.
 
-Colors — `--color-bg` (#161826), `--color-text` (#e9e9ed), `--color-accent` (#9184d9), `--color-neutral-100/200/300/400/500/700/800/900`, `--color-accent-200/300/500/600/800`.
+Faction: Horde `#ff4b4b` (mark fill `#ff5a5a`), Alliance `#5aa8ff`.
 
-Spacing — `--space-3`, `--space-4` (18px), `--space-6` (28px). ⚠️ `--space-5` does **not** exist in this stylesheet; using it silently collapses the gap to 0.
+Nebula ground: `#06040f`, `#050410`, `#07051a`, `#0a0720`, `#2b1b6b`, `#4a2a7a`, `#6b2b6b`.
+Text: `#f6f4ff` / `#eae8ff` primary, `rgba(226,222,255,.62)` secondary,
+`rgba(214,208,255,.6)` muted, `rgba(206,199,255,.45)` faintest. Accent `#9184d9`,
+highlights `#c9b8ff` and `#f7a8e8`.
 
-Radius — `--radius-sm`, `--radius-md` (8px base), `--radius-lg`. Shadows — `--shadow-lg` on the dialog only.
-
-Type — `--font-heading` and `--font-body` are both Inter. Weights used: 400, 500, 600 (600 only on the small class badges). Headings never go past 500 — hierarchy is size and space, per the design system.
-
-**Class colors** — Blizzard's canonical values, not design-system tokens:
-
-| Class | Hex | | Class | Hex |
-| --- | --- | --- | --- | --- |
-| Death Knight | `#C41E3A` | | Hunter | `#AAD372` |
-| Demon Hunter | `#A330C9` | | Mage | `#3FC7EB` |
-| Druid | `#FF7C0A` | | Monk | `#00FF98` |
-| Evoker | `#33937F` | | Paladin | `#F48CBA` |
-| Priest | `#FFFFFF` | | Shaman | `#0070DD` |
-| Rogue | `#FFF468` | | Warlock | `#8788EE` |
-| Warrior | `#C69B6D` | | | |
-
-Priest white and Monk jade run hot against the dark ground; consider damping those two if they prove distracting in real use.
+Radii: 8px inputs/small buttons, 9px event blocks, 10px header buttons, 16px composer and
+grid panel, 18px dialog. Blur: 6px (events, dialog backdrop), 8px (inputs), 10px (buttons),
+18px (grid panel), 22px (dialog/composer). Type: 10px, 10.5px, 11px, 11.5px, 12px, 12.5px,
+13px, 13.5px, 16px, 24px; weights 400 and 500 only. Spacing comes from the design system's
+compact `--space-*` scale (`--space-2` … `--space-6`).
 
 ## Assets
+- `horde-icon.svg` — supplied by the user; used as a CSS mask, so its own fills are
+  irrelevant. There is no Alliance equivalent by design.
+- No other imagery. Icons elsewhere are text glyphs (`‹`, `›`, `×`).
 
-No images or icons. Class identity is carried by color plus a single-letter badge. The design system specifies **Phosphor icons** (phosphoricons.com) if icons are added later — the `‹ › ×` glyphs in these mocks are placeholders and should become Phosphor icons in production.
+## Known constraints
+- In a three-way overlap the lane width drops to roughly 35px, so the raid name and time
+  line truncate hard. Acceptable in the prototype; a production build may want a tooltip,
+  a "+2 more" affordance, or a wider minimum lane with horizontal scroll.
+- Only three week rows render, and only forward/backward by whole weeks. There is no month
+  or agenda view.
+- `color-mix()` is used throughout for the class-color tints. If the target platform lacks
+  it, precompute the mixes per class at build time.
 
 ## Files
-
-| File | What it is |
-| --- | --- |
-| `Raid Calendar.dc.html` | standard desktop view (max 1600×1100), including the create-event popup |
-| `Raid Calendar 4K.dc.html` | 4K / 125%-scaling view (3072×1728 canvas) |
-| `Class Colors.dc.html` | all 13 class colors × both event states |
-| `_ds/nocturne-…/styles.css` | Nocturne token sheet + component layer — the source of every `var(--*)` above |
-| `_ds/nocturne-…/_ds_bundle.js` | Nocturne component bundle |
-| `support.js` | prototype template runtime — **do not port** |
-
-Open any `.dc.html` directly in a browser to see it render.
+- `Raid Calendar Nebula.dc.html` — **the design to build.** Markup at the top, layout and
+  state logic in the class at the bottom.
+- `Raid Calendar.dc.html` — the previous flat version, for reference on what changed.
+- `horde-icon.svg` — the faction mark.
+- `support.js` — prototype runtime only. Ignore.
+- `_ds/` — the Nocturne design system the spacing/font variables come from.

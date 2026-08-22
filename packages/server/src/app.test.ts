@@ -417,3 +417,97 @@ describe('PATCH /api/events/:id (custom events)', () => {
     expect(listRes.json().events).toEqual([{ ...created, status: 'confirmed' }]);
   });
 });
+
+describe('PUT /api/raid-helper-events/:raidHelperEventId/horde', () => {
+  let app: FastifyInstance;
+  let testCounter = 0;
+
+  beforeEach(async () => {
+    testCounter += 1;
+    app = await makeApp(`horde-tag-test-key-${testCounter}`);
+  });
+
+  afterEach(async () => {
+    await app.close();
+    vi.unstubAllGlobals();
+  });
+
+  async function loginCookie(app: FastifyInstance) {
+    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
+    return login.cookies.find((c) => c.name === 'raidschedule_session')!.value;
+  }
+
+  it('requires authentication', async () => {
+    const res = await app.inject({ method: 'PUT', url: '/api/raid-helper-events/evt1/horde', payload: { isHorde: true } });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('rejects an invalid body', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/raid-helper-events/evt1/horde',
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: 'yes' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('tags a raid-helper raid as Horde and carries it onto every sign-up in a subsequent GET /api/events', async () => {
+    const cookie = await loginCookie(app);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify([rawEvent({ id: 'evt1', startTime: nowSeconds + 3600, characterName: 'Thrashclaw' })]),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    const before = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(before.json().events[0].isHorde).toBe(false);
+
+    const putRes = await app.inject({
+      method: 'PUT',
+      url: '/api/raid-helper-events/evt1/horde',
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: true },
+    });
+    expect(putRes.statusCode).toBe(200);
+    expect(putRes.json()).toEqual({ raidHelperEventId: 'evt1', isHorde: true });
+
+    const after = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(after.json().events[0].isHorde).toBe(true);
+  });
+
+  it('overrides title-based detection in either direction', async () => {
+    const cookie = await loginCookie(app);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify([
+            { ...rawEvent({ id: 'evt1', startTime: nowSeconds + 3600, characterName: 'Thrashclaw' }), title: 'Thursday Horde Run' },
+          ]),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    const before = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(before.json().events[0].isHorde).toBe(true);
+
+    await app.inject({
+      method: 'PUT',
+      url: '/api/raid-helper-events/evt1/horde',
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: false },
+    });
+
+    const after = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(after.json().events[0].isHorde).toBe(false);
+  });
+});

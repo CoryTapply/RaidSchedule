@@ -13,11 +13,10 @@ const MONTH_NAMES = [
   'December',
 ];
 
-const WEEKDAY_FULL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function weekdayLabels(full: boolean): string[] {
-  return full ? WEEKDAY_FULL : WEEKDAY_SHORT;
+export function weekdayLabels(): string[] {
+  return WEEKDAY_SHORT;
 }
 
 export function dayLabel(date: Date, isFirstOfMonth: boolean): string {
@@ -26,6 +25,20 @@ export function dayLabel(date: Date, isFirstOfMonth: boolean): string {
 
 export function timeLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
+/** "8:00 PM – 11:00 PM", or just the start time when there's no end. */
+export function timeRangeLabel(startIso: string, endIso?: string): string {
+  if (!endIso) return timeLabel(startIso);
+  return `${timeLabel(startIso)} – ${timeLabel(endIso)}`;
+}
+
+/** Gutter/hour-line label for an hour-of-day that may run past 23 (rows can extend past midnight): "5 PM", "12 AM". */
+export function hourLabel(hour: number): string {
+  const h = ((hour % 24) + 24) % 24;
+  if (h === 0) return '12 AM';
+  if (h === 12) return '12 PM';
+  return `${h % 12} ${h < 12 ? 'AM' : 'PM'}`;
 }
 
 export function dateLabel(iso: string): string {
