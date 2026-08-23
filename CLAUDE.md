@@ -46,6 +46,21 @@ The standard and 4K prototypes (`design/Raid Calendar.dc.html` vs `design/Raid C
 
 CSS Modules, no framework. `packages/web/src/styles/tokens.css` is a **vendored copy** of `design/_ds/nocturne-.../styles.css` — if the design system sheet changes, re-copy it rather than hand-editing the vendored one. The per-class event card colors (`eventCard.module.css`) pin `color-mix(in srgb, …)` as static CSS specifically to prevent the OKLCH regression `design/README.md` warns about (only the raw class hex varies, via the `--class-color` custom property) — don't move that logic into JS-generated inline styles. Note `.badgeColorPending`/`.badgeColorConfirmed` in `eventCard.module.css` are deliberately separate from the sizing-only `.badge` class (and are reused as-is by the dialog) — this split exists because combining sizing and color into one class caused a CSS Modules specificity collision when the same color rule needed to apply to a differently-sized badge; keep that separation if you touch either.
 
+## Deployment
+
+Production runs on Cloud Run (single service, scale-to-zero, live at
+`raid.zerpy.dev`), built from the same root `Dockerfile` used locally.
+Since Cloud Run's local disk doesn't survive a cold start, SQLite is kept
+durable via Litestream (`litestream.yml`, `entrypoint.sh`): it streams the
+WAL to a GCS bucket continuously and restores from it on boot. This is
+transparent to the app — `better-sqlite3` still just opens a normal local
+file — and only activates when `LITESTREAM_BUCKET` is set; unset (e.g.
+plain `docker-compose up`), `entrypoint.sh` runs the server directly.
+`max-instances=1` on the Cloud Run service is required, not just a cost
+choice: both SQLite and Litestream assume a single writer. Full runbook,
+including the `gcloud`/`docker buildx` commands to deploy or redeploy, is
+in `deploy/cloudrun/README.md`.
+
 ## Known environment quirks
 
 - `npm install` needs `--legacy-peer-deps` here (see Commands above).
