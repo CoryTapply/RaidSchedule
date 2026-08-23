@@ -2,19 +2,18 @@
  * Nebula timeline calendar. Sized with clamp()/cqi the same way the old flat
  * design was: a "standard" endpoint taken verbatim from
  * design/Raid Calendar Nebula.dc.html (container width 1600px, 1cqi = 16px)
- * and a "4K" endpoint at 2200px (1cqi = 22px). Unlike the flat design there
- * is no 4K Nebula reference file, so the 4K endpoint for every token below
- * that has no analog in the old two-file system (the whole timeline: gutter
- * width, PX_PER_HOUR, PAD_TOP, hour/event/day-number type, the Horde mark)
- * is an extrapolation at roughly the same scale factor (~1.6x) the old
- * system used for comparable grid-geometry tokens (day-pad, day-row-min,
- * weekday-pad) — a judgment call, not a documented spec. Tokens that do have
- * an old analog (header title, nav/today buttons, weekday type, dialog)
- * keep that analog's original scale ratio, re-anchored to Nebula's own
- * standard-endpoint literal. Padding/gaps are deliberately NOT part of this
- * clamp system — the Nebula design ties those to the design system's fixed
- * --space-* scale instead (see every `var(--space-N)` in the .dc.html), so
- * they're used directly, unscaled, below.
+ * and a "4K" endpoint at 2200px (1cqi = 22px). There is no 4K Nebula
+ * reference file, so every token's 4K max below is a deliberate, uniform
+ * ~1.2x of its standard min — a judgment call, not a documented spec, kept
+ * consistent across all tokens (an earlier pass extrapolated per-token
+ * ratios anywhere from 1.25x to 2.4x, which read as visually unbalanced and
+ * — combined with .content's max-width not scaling — oversized once the
+ * container passed ~2200px). If you need to retune a value, recompute both
+ * endpoints (MIN from the .dc.html, MAX = round_half(MIN * 1.2)) rather than
+ * eyeballing a new coefficient. Padding/gaps are deliberately NOT part of
+ * this clamp system — the Nebula design ties those to the design system's
+ * fixed --space-* scale instead (see every `var(--space-N)` in the
+ * .dc.html), so they're used directly, unscaled, below.
  */
 .root {
   position: relative;
@@ -30,36 +29,36 @@
     radial-gradient(140% 100% at 60% 110%, #6b2b6b 0%, rgba(107, 43, 107, 0) 45%),
     linear-gradient(180deg, #0a0720 0%, #07051a 60%, #050410 100%);
 
-  --header-title-size: clamp(24px, 1.5cqi, 33px);
-  --range-size: clamp(13px, calc(-0.33px + 0.833cqi), 18px);
-  --nav-btn-size: clamp(36px, calc(-6.67px + 2.667cqi), 52px);
-  --nav-btn-font: clamp(16px, 1cqi, 22px);
-  --today-btn-height: clamp(36px, calc(-6.67px + 2.667cqi), 52px);
-  --today-btn-font: clamp(13px, calc(2.33px + 0.667cqi), 17px);
+  --header-title-size: clamp(24px, calc(10.667px + 0.833cqi), 29px);
+  --range-size: clamp(13px, calc(6.333px + 0.417cqi), 15.5px);
+  --nav-btn-size: clamp(36px, calc(17.333px + 1.167cqi), 43px);
+  --nav-btn-font: clamp(16px, calc(8px + 0.5cqi), 19px);
+  --today-btn-height: clamp(36px, calc(17.333px + 1.167cqi), 43px);
+  --today-btn-font: clamp(13px, calc(6.333px + 0.417cqi), 15.5px);
 
-  --weekday-pad-y: clamp(11px, calc(-7.67px + 1.167cqi), 18px);
-  --weekday-pad-x: clamp(12px, calc(-9.33px + 1.333cqi), 20px);
-  --weekday-font: clamp(11px, calc(0.33px + 0.667cqi), 15px);
+  --weekday-pad-y: clamp(11px, calc(5.667px + 0.333cqi), 13px);
+  --weekday-pad-x: clamp(12px, calc(5.333px + 0.417cqi), 14.5px);
+  --weekday-font: clamp(11px, calc(5.667px + 0.333cqi), 13px);
 
-  --gutter-width: clamp(58px, calc(-35.33px + 5.833cqi), 93px);
-  --px-per-hour: clamp(38px, calc(-23.33px + 3.833cqi), 61px);
-  --pad-top: clamp(16px, calc(-10.67px + 1.667cqi), 26px);
-  --hour-font: clamp(10.5px, calc(-6.83px + 1.083cqi), 17px);
-  --day-pill-font: clamp(11.5px, calc(-7.17px + 1.167cqi), 18.5px);
+  --gutter-width: clamp(58px, calc(27.333px + 1.917cqi), 69.5px);
+  --px-per-hour: clamp(38px, calc(18px + 1.25cqi), 45.5px);
+  --pad-top: clamp(16px, calc(8px + 0.5cqi), 19px);
+  --hour-font: clamp(10.5px, calc(5.167px + 0.333cqi), 12.5px);
+  --day-pill-font: clamp(11.5px, calc(4.833px + 0.417cqi), 14px);
 
-  --event-pad-y: clamp(5px, calc(-13.67px + 1.167cqi), 12px);
-  --event-pad-x: clamp(7px, calc(-11.67px + 1.167cqi), 14px);
-  --event-raidname-font: clamp(11px, calc(-6.33px + 1.083cqi), 17.5px);
-  --event-meta-font: clamp(10px, calc(-6px + 1cqi), 16px);
-  --mark-size: clamp(30px, calc(-18px + 3cqi), 48px);
+  --event-pad-y: clamp(5px, calc(2.333px + 0.167cqi), 6px);
+  --event-pad-x: clamp(7px, calc(3px + 0.25cqi), 8.5px);
+  --event-raidname-font: clamp(11px, calc(5.667px + 0.333cqi), 13px);
+  --event-meta-font: clamp(10px, calc(4.667px + 0.333cqi), 12px);
+  --mark-size: clamp(30px, calc(14px + 1cqi), 36px);
 
-  --dialog-width: clamp(352px, calc(-144px + 31cqi), 538px);
-  --dialog-title-size: clamp(16px, calc(-5.33px + 1.333cqi), 24px);
-  --dialog-meta-size: clamp(12px, calc(1.33px + 0.667cqi), 16px);
-  --dialog-badge-size: clamp(28px, calc(-14.67px + 2.667cqi), 44px);
-  --dialog-char-size: clamp(13px, calc(-0.33px + 0.833cqi), 18px);
-  --dialog-status-size: clamp(12px, calc(4px + 0.5cqi), 15px);
-  --dialog-close-size: clamp(28px, calc(-4px + 2cqi), 40px);
+  --dialog-width: clamp(352px, calc(164px + 11.75cqi), 422.5px);
+  --dialog-title-size: clamp(16px, calc(8px + 0.5cqi), 19px);
+  --dialog-meta-size: clamp(12px, calc(5.333px + 0.417cqi), 14.5px);
+  --dialog-badge-size: clamp(28px, calc(13.333px + 0.917cqi), 33.5px);
+  --dialog-char-size: clamp(13px, calc(6.333px + 0.417cqi), 15.5px);
+  --dialog-status-size: clamp(12px, calc(5.333px + 0.417cqi), 14.5px);
+  --dialog-close-size: clamp(28px, calc(13.333px + 0.917cqi), 33.5px);
 }
 
 .root::before {
@@ -86,7 +85,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  max-width: 1600px;
+  max-width: clamp(1600px, 100cqi, 2200px);
   width: 100%;
   margin: 0 auto;
 }
