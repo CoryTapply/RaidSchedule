@@ -1,0 +1,6 @@
+dbs:
+  - path: ${DB_PATH}
+    replica:
+      type: gs
+      bucket: ${LITESTREAM_BUCKET}
+      path: raidschedule

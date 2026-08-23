@@ -23,6 +23,14 @@ ENV NODE_ENV=production
 ENV PORT=8080
 ENV DB_PATH=/data/raidschedule.db
 
+# Litestream: streams the SQLite WAL to object storage and restores from it
+# on boot. Needed on Cloud Run (ephemeral local disk between cold starts);
+# a no-op on GKE/docker-compose, where a real volume already persists /data
+# — entrypoint.sh only invokes it when LITESTREAM_BUCKET is set.
+COPY --from=litestream/litestream:latest /usr/local/bin/litestream /usr/local/bin/litestream
+COPY litestream.yml /app/litestream.yml
+COPY entrypoint.sh /app/entrypoint.sh
+
 COPY --from=build /app/package.json /app/package-lock.json ./
 COPY --from=build /app/packages/shared/package.json packages/shared/package.json
 COPY --from=build /app/packages/server/package.json packages/server/package.json
@@ -33,8 +41,8 @@ COPY --from=build /app/packages/shared/dist packages/shared/dist
 COPY --from=build /app/packages/server/dist packages/server/dist
 COPY --from=build /app/packages/web/dist packages/web/dist
 
-RUN mkdir -p /data && chown node:node /data
+RUN mkdir -p /data && chown node:node /data && chmod +x /app/entrypoint.sh
 VOLUME /data
 EXPOSE 8080
 USER node
-CMD ["node", "packages/server/dist/index.js"]
+ENTRYPOINT ["/app/entrypoint.sh"]
