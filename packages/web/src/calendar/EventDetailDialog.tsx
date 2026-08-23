@@ -74,14 +74,19 @@ export function EventDetailDialog({
         </div>
         {isCustom && (
           <div className={styles.footer}>
-            {(confirmError ?? deleteError) && (
+            {(confirmError ?? deleteError ?? hordeError) && (
               <span className={styles.deleteError} role="alert">
-                {confirmError ?? deleteError}
+                {confirmError ?? deleteError ?? hordeError}
               </span>
             )}
             {event.status === 'pending' && (
               <button type="button" className={styles.confirmButton} onClick={onConfirm} disabled={confirming}>
                 {confirming ? 'Confirming…' : 'Mark confirmed'}
+              </button>
+            )}
+            {onToggleHorde && (
+              <button type="button" className={styles.confirmButton} onClick={onToggleHorde} disabled={togglingHorde}>
+                {togglingHorde ? 'Updating…' : event.isHorde ? 'Remove Horde tag' : 'Mark as Horde'}
               </button>
             )}
             <button

@@ -198,6 +198,7 @@ describe('POST /api/events (custom events)', () => {
     endsAt: '2026-08-21T23:00:00.000Z',
     status: 'confirmed',
     character: { name: 'Thrashclaw', className: 'Druid' },
+    isHorde: false,
   };
 
   it('requires authentication', async () => {
@@ -266,6 +267,7 @@ describe('DELETE /api/events/:id (custom events)', () => {
     endsAt: '2026-08-21T23:00:00.000Z',
     status: 'confirmed',
     character: { name: 'Thrashclaw', className: 'Druid' },
+    isHorde: false,
   };
 
   it('requires authentication', async () => {
@@ -345,6 +347,7 @@ describe('PATCH /api/events/:id (custom events)', () => {
     endsAt: '2026-08-21T23:00:00.000Z',
     status: 'pending',
     character: { name: 'Thrashclaw', className: 'Druid' },
+    isHorde: false,
   };
 
   it('requires authentication', async () => {
@@ -509,5 +512,101 @@ describe('PUT /api/raid-helper-events/:raidHelperEventId/horde', () => {
 
     const after = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
     expect(after.json().events[0].isHorde).toBe(false);
+  });
+});
+
+describe('PUT /api/events/:id/horde (custom events)', () => {
+  let app: FastifyInstance;
+  let testCounter = 0;
+
+  beforeEach(async () => {
+    testCounter += 1;
+    app = await makeApp(`custom-event-horde-test-key-${testCounter}`);
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify([]), { status: 200 })));
+  });
+
+  afterEach(async () => {
+    await app.close();
+    vi.unstubAllGlobals();
+  });
+
+  async function loginCookie(app: FastifyInstance) {
+    const login = await app.inject({ method: 'POST', url: '/api/auth/login', payload: { password: APP_PASSWORD } });
+    return login.cookies.find((c) => c.name === 'raidschedule_session')!.value;
+  }
+
+  const validPayload = {
+    raidName: 'Guild Night',
+    startsAt: '2026-08-21T20:00:00.000Z',
+    endsAt: '2026-08-21T23:00:00.000Z',
+    status: 'confirmed',
+    character: { name: 'Thrashclaw', className: 'Druid' },
+    isHorde: false,
+  };
+
+  it('requires authentication', async () => {
+    const res = await app.inject({ method: 'PUT', url: '/api/events/custom:does-not-exist/horde', payload: { isHorde: true } });
+    expect(res.statusCode).toBe(401);
+  });
+
+  it('rejects an id that is not a custom event id', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/events/raid-helper:123:456/horde',
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: true },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('rejects an invalid body', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/events/custom:does-not-exist/horde',
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: 'yes' },
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('returns 404 for an unknown custom event id', async () => {
+    const cookie = await loginCookie(app);
+    const res = await app.inject({
+      method: 'PUT',
+      url: '/api/events/custom:does-not-exist/horde',
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: true },
+    });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it('tags a custom event as Horde and reflects it in a subsequent GET /api/events', async () => {
+    const cookie = await loginCookie(app);
+    const createRes = await app.inject({
+      method: 'POST',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+      payload: validPayload,
+    });
+    const created = createRes.json();
+    expect(created.isHorde).toBe(false);
+
+    const putRes = await app.inject({
+      method: 'PUT',
+      url: `/api/events/${encodeURIComponent(created.id)}/horde`,
+      cookies: { raidschedule_session: cookie },
+      payload: { isHorde: true },
+    });
+    expect(putRes.statusCode).toBe(200);
+    expect(putRes.json()).toMatchObject({ id: created.id, isHorde: true });
+
+    const listRes = await app.inject({
+      method: 'GET',
+      url: '/api/events',
+      cookies: { raidschedule_session: cookie },
+    });
+    expect(listRes.json().events).toEqual([{ ...created, isHorde: true }]);
   });
 });

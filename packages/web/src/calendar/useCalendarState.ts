@@ -1,6 +1,12 @@
 import { addDays, buildWindow, dateKey, groupEventsByDateKey, lockoutStart, startOfWeekSunday, type RaidEvent } from '@raidschedule/shared';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { confirmCustomEvent, createCustomEvent, deleteCustomEvent, setHordeTag } from '../api/eventsClient.js';
+import {
+  confirmCustomEvent,
+  createCustomEvent,
+  deleteCustomEvent,
+  setCustomEventFaction,
+  setHordeTag,
+} from '../api/eventsClient.js';
 import { getStoredClass, localDateTimeToIso, setStoredClass, type ComposerState } from './composer.js';
 import { composerDateLabel } from './format.js';
 
@@ -117,25 +123,46 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
   }, [selectedEvent, confirmingEvent]);
 
   const toggleHordeSelectedEvent = useCallback(() => {
-    if (!selectedEvent || selectedEvent.source !== 'raid-helper' || !selectedEvent.raidHelperEventId || togglingHorde) return;
+    if (!selectedEvent || togglingHorde) return;
     const target = selectedEvent;
-    const raidHelperEventId = target.raidHelperEventId!;
     const nextIsHorde = !target.isHorde;
-    setTogglingHorde(true);
-    setHordeError(null);
-    void (async () => {
-      try {
-        await setHordeTag(raidHelperEventId, nextIsHorde);
-        setHordeOverrides((prev) => new Map(prev).set(raidHelperEventId, nextIsHorde));
-        setSelectedEvent((current) =>
-          current && current.raidHelperEventId === raidHelperEventId ? { ...current, isHorde: nextIsHorde } : current,
-        );
-      } catch (err) {
-        setHordeError(err instanceof Error ? err.message : 'Failed to update Horde tag');
-      } finally {
-        setTogglingHorde(false);
-      }
-    })();
+
+    if (target.source === 'raid-helper' && target.raidHelperEventId) {
+      const raidHelperEventId = target.raidHelperEventId;
+      setTogglingHorde(true);
+      setHordeError(null);
+      void (async () => {
+        try {
+          await setHordeTag(raidHelperEventId, nextIsHorde);
+          setHordeOverrides((prev) => new Map(prev).set(raidHelperEventId, nextIsHorde));
+          setSelectedEvent((current) =>
+            current && current.raidHelperEventId === raidHelperEventId ? { ...current, isHorde: nextIsHorde } : current,
+          );
+        } catch (err) {
+          setHordeError(err instanceof Error ? err.message : 'Failed to update Horde tag');
+        } finally {
+          setTogglingHorde(false);
+        }
+      })();
+      return;
+    }
+
+    if (target.source === 'custom') {
+      const id = target.id;
+      setTogglingHorde(true);
+      setHordeError(null);
+      void (async () => {
+        try {
+          await setCustomEventFaction(id, nextIsHorde);
+          setHordeOverrides((prev) => new Map(prev).set(id, nextIsHorde));
+          setSelectedEvent((current) => (current && current.id === id ? { ...current, isHorde: nextIsHorde } : current));
+        } catch (err) {
+          setHordeError(err instanceof Error ? err.message : 'Failed to update Horde tag');
+        } finally {
+          setTogglingHorde(false);
+        }
+      })();
+    }
   }, [selectedEvent, togglingHorde]);
 
   const openComposer = useCallback((day: CalendarDay, e: { clientX: number; clientY: number }) => {
@@ -156,6 +183,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
       character: '',
       cls: getStoredClass() ?? 'Druid',
       status: 'confirmed',
+      isHorde: false,
       saving: false,
       saveError: null,
     });
@@ -178,6 +206,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
         endsAt: localDateTimeToIso(composer.key, composer.end),
         status: composer.status,
         character: { name: composer.character.trim() || '—', className: composer.cls },
+        isHorde: composer.isHorde,
       });
       setCustom((prev) => [...prev, event]);
       setComposer(null);
@@ -206,11 +235,10 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
       [...events, ...custom]
         .filter((e) => !deletedIds.has(e.id))
         .map((e) => (confirmedIds.has(e.id) ? { ...e, status: 'confirmed' as const } : e))
-        .map((e) =>
-          e.raidHelperEventId && hordeOverrides.has(e.raidHelperEventId)
-            ? { ...e, isHorde: hordeOverrides.get(e.raidHelperEventId) }
-            : e,
-        ),
+        .map((e) => {
+          const overrideKey = e.raidHelperEventId ?? e.id;
+          return hordeOverrides.has(overrideKey) ? { ...e, isHorde: hordeOverrides.get(overrideKey) } : e;
+        }),
     );
 
     return buildWindow(anchor, 21).map((date): CalendarDay => {

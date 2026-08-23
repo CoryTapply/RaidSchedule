@@ -1,7 +1,13 @@
 import { act, fireEvent, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dateKey, startOfWeekSunday, type RaidEvent } from '@raidschedule/shared';
-import { confirmCustomEvent, createCustomEvent, deleteCustomEvent, setHordeTag } from '../api/eventsClient.js';
+import {
+  confirmCustomEvent,
+  createCustomEvent,
+  deleteCustomEvent,
+  setCustomEventFaction,
+  setHordeTag,
+} from '../api/eventsClient.js';
 import { useCalendarState } from './useCalendarState.js';
 
 vi.mock('../api/eventsClient.js', () => ({
@@ -9,12 +15,14 @@ vi.mock('../api/eventsClient.js', () => ({
   deleteCustomEvent: vi.fn(),
   confirmCustomEvent: vi.fn(),
   setHordeTag: vi.fn(),
+  setCustomEventFaction: vi.fn(),
 }));
 
 const mockCreateCustomEvent = vi.mocked(createCustomEvent);
 const mockDeleteCustomEvent = vi.mocked(deleteCustomEvent);
 const mockConfirmCustomEvent = vi.mocked(confirmCustomEvent);
 const mockSetHordeTag = vi.mocked(setHordeTag);
+const mockSetCustomEventFaction = vi.mocked(setCustomEventFaction);
 
 // Wednesday, August 19, 2026 — a known "today" so lockout-week fallback is deterministic.
 const TODAY = new Date(2026, 7, 19);
@@ -42,6 +50,19 @@ beforeEach(() => {
   }) as RaidEvent);
   mockSetHordeTag.mockReset();
   mockSetHordeTag.mockImplementation(async (raidHelperEventId, isHorde) => ({ raidHelperEventId, isHorde }));
+  mockSetCustomEventFaction.mockReset();
+  mockSetCustomEventFaction.mockImplementation(
+    async (id, isHorde) =>
+      ({
+        id,
+        source: 'custom',
+        raidName: 'Test Raid',
+        startsAt: new Date().toISOString(),
+        status: 'confirmed',
+        character: { name: 'Thrashclaw', className: 'Druid' },
+        isHorde,
+      }) as RaidEvent,
+  );
 });
 
 afterEach(() => {
@@ -484,7 +505,7 @@ describe('useCalendarState', () => {
       expect(result.current.selectedEvent).toMatchObject({ isHorde: false });
     });
 
-    it('is a no-op for a custom event', async () => {
+    it('tags a selected custom event as Horde', async () => {
       const customEvent: RaidEvent = {
         id: 'custom:evt-1',
         source: 'custom',
@@ -492,6 +513,7 @@ describe('useCalendarState', () => {
         startsAt: new Date().toISOString(),
         status: 'confirmed',
         character: { name: 'Thrashclaw', className: 'Druid' },
+        isHorde: false,
       };
       const { result } = renderHook(() => useCalendarState([customEvent]));
 
@@ -499,6 +521,51 @@ describe('useCalendarState', () => {
       await act(async () => result.current.toggleHordeSelectedEvent());
 
       expect(mockSetHordeTag).not.toHaveBeenCalled();
+      expect(mockSetCustomEventFaction).toHaveBeenCalledWith('custom:evt-1', true);
+      expect(result.current.selectedEvent).toMatchObject({ id: customEvent.id, isHorde: true });
+
+      const events = result.current.days.flatMap((d) => d.events);
+      expect(events.find((e) => e.id === customEvent.id)?.isHorde).toBe(true);
+    });
+
+    it('toggles an already-tagged custom event back off', async () => {
+      const customEvent: RaidEvent = {
+        id: 'custom:evt-1',
+        source: 'custom',
+        raidName: 'Test Raid',
+        startsAt: new Date().toISOString(),
+        status: 'confirmed',
+        character: { name: 'Thrashclaw', className: 'Druid' },
+        isHorde: true,
+      };
+      const { result } = renderHook(() => useCalendarState([customEvent]));
+
+      act(() => result.current.selectEvent(customEvent));
+      await act(async () => result.current.toggleHordeSelectedEvent());
+
+      expect(mockSetCustomEventFaction).toHaveBeenCalledWith('custom:evt-1', false);
+      expect(result.current.selectedEvent).toMatchObject({ isHorde: false });
+    });
+
+    it('surfaces an error for a custom event when the request fails', async () => {
+      const customEvent: RaidEvent = {
+        id: 'custom:evt-1',
+        source: 'custom',
+        raidName: 'Test Raid',
+        startsAt: new Date().toISOString(),
+        status: 'confirmed',
+        character: { name: 'Thrashclaw', className: 'Druid' },
+        isHorde: false,
+      };
+      mockSetCustomEventFaction.mockRejectedValueOnce(new Error('Failed to update Horde tag (500)'));
+      const { result } = renderHook(() => useCalendarState([customEvent]));
+
+      act(() => result.current.selectEvent(customEvent));
+      await act(async () => result.current.toggleHordeSelectedEvent());
+
+      expect(result.current.selectedEvent).not.toBeNull();
+      expect(result.current.togglingHorde).toBe(false);
+      expect(result.current.hordeError).toBe('Failed to update Horde tag (500)');
     });
 
     it('surfaces an error and keeps the dialog open when the request fails', async () => {

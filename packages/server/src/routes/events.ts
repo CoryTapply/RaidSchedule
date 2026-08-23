@@ -2,7 +2,13 @@ import { isHordeTitle, WOW_CLASSES, type EventsResponse } from '@raidschedule/sh
 import type Database from 'better-sqlite3';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { deleteCustomEvent, insertCustomEvent, listCustomEvents, updateCustomEventStatus } from '../db/customEvents.js';
+import {
+  deleteCustomEvent,
+  insertCustomEvent,
+  listCustomEvents,
+  updateCustomEventFaction,
+  updateCustomEventStatus,
+} from '../db/customEvents.js';
 import { getHordeTags, setHordeTag } from '../db/hordeTags.js';
 import { fetchRaidHelperEvents, RaidHelperError } from '../integrations/raidHelper/client.js';
 import { normalizeRaidHelperEvent } from '../integrations/raidHelper/normalize.js';
@@ -28,6 +34,10 @@ const setHordeTagSchema = z.object({
   isHorde: z.boolean(),
 });
 
+const setCustomEventFactionSchema = z.object({
+  isHorde: z.boolean(),
+});
+
 const createCustomEventSchema = z.object({
   raidName: z.string().min(1),
   startsAt: z.string().min(1),
@@ -38,6 +48,7 @@ const createCustomEventSchema = z.object({
     className: z.enum([...WOW_CLASSES, 'Unknown']),
     spec: z.string().optional(),
   }),
+  isHorde: z.boolean(),
 });
 
 export function registerEventRoutes(fastify: FastifyInstance, raidHelperApiKey: string, db: Database.Database): void {
@@ -80,6 +91,22 @@ export function registerEventRoutes(fastify: FastifyInstance, raidHelperApiKey: 
       return reply.code(400).send({ error: 'invalid_request' });
     }
     const event = updateCustomEventStatus(db, id.slice('custom:'.length), body.data.status);
+    if (!event) {
+      return reply.code(404).send({ error: 'not_found' });
+    }
+    return reply.send(event);
+  });
+
+  fastify.put('/api/events/:id/horde', { preHandler: requireAuth }, async (request, reply) => {
+    const { id } = request.params as { id: string };
+    if (!id.startsWith('custom:')) {
+      return reply.code(400).send({ error: 'invalid_request' });
+    }
+    const body = setCustomEventFactionSchema.safeParse(request.body);
+    if (!body.success) {
+      return reply.code(400).send({ error: 'invalid_request' });
+    }
+    const event = updateCustomEventFaction(db, id.slice('custom:'.length), body.data.isHorde);
     if (!event) {
       return reply.code(404).send({ error: 'not_found' });
     }

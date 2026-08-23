@@ -63,4 +63,5 @@ export interface CreateCustomEventInput {
   endsAt?: string;
   status: RosterStatus;
   character: CharacterSignup;
+  isHorde: boolean;
 }

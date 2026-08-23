@@ -16,6 +16,7 @@ function makeComposer(overrides: Partial<ComposerState> = {}): ComposerState {
     character: '',
     cls: 'Druid',
     status: 'confirmed',
+    isHorde: false,
     saving: false,
     saveError: null,
     ...overrides,
@@ -188,6 +189,33 @@ describe('EventComposer', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Signed up' }));
     expect(onChange).toHaveBeenCalledWith({ status: 'confirmed' });
+  });
+
+  it('shows Alliance selected by default', () => {
+    render(<EventComposer composer={makeComposer()} onChange={vi.fn()} onCancel={vi.fn()} onSave={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Alliance' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Horde' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('calls onChange with isHorde true when Horde is clicked', async () => {
+    const onChange = vi.fn();
+    render(<EventComposer composer={makeComposer()} onChange={onChange} onCancel={vi.fn()} onSave={vi.fn()} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Horde' }));
+    expect(onChange).toHaveBeenCalledWith({ isHorde: true });
+  });
+
+  it('calls onChange with isHorde false when Alliance is clicked', async () => {
+    const onChange = vi.fn();
+    render(
+      <EventComposer
+        composer={makeComposer({ isHorde: true })}
+        onChange={onChange}
+        onCancel={vi.fn()}
+        onSave={vi.fn()}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Alliance' }));
+    expect(onChange).toHaveBeenCalledWith({ isHorde: false });
   });
 
   it('does not call onSave when Enter is pressed on a status option button', async () => {
