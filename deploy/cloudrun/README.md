@@ -14,6 +14,28 @@ and no other fixed infrastructure cost.
 single-writer, and Litestream itself isn't safe with more than one instance
 replicating the same database concurrently.
 
+## Automated deploys
+
+`.github/workflows/deploy.yml` builds, tests, and deploys automatically on
+every push to `main` (i.e. every merged PR) — lint/typecheck/test gate the
+deploy, then it builds the image tagged with the commit SHA, pushes to
+Artifact Registry, and runs `gcloud run deploy` with just the new image
+(every other setting — env vars, secrets, service account, scaling limits —
+is preserved from the service's existing configuration).
+
+Auth is via Workload Identity Federation, not a stored key: GitHub's OIDC
+token is exchanged for short-lived access as the `raidschedule-deployer`
+service account, scoped by the workload identity provider's
+`attribute-condition` to only this repo (`CoryTapply/RaidSchedule`). That
+service account only has `roles/run.admin` and
+`roles/artifactregistry.writer` on the project, plus `roles/iam.serviceAccountUser`
+on the app's runtime service account (`raidschedule-run`) — it can deploy
+new revisions but can't read the app's secrets or the Litestream bucket
+directly, since it never assumes the runtime identity.
+
+The steps below are what that workflow automates; still useful for a first
+deploy, a one-off manual deploy, or reproducing the setup in a new project.
+
 Fill in `<PROJECT>`, `<REGION>`, `<TAG>`, and the domain before running.
 
 ## 1. Enable APIs
