@@ -1,5 +1,14 @@
 # Deploying RaidSchedule to GKE Autopilot
 
+> **Historical reference only.** This was deployed and verified live at
+> `raid.zerpy.dev`, then decommissioned in favor of `deploy/cloudrun/` —
+> for one user with a handful of requests/day, GKE's ~$0.10/hr cluster
+> management fee (waived only for zonal, not the regional cluster created
+> here) plus the GCE Ingress's flat forwarding-rule cost put this around
+> ~$100/month, versus near-$0 on Cloud Run's scale-to-zero pricing. Kept
+> here in case GKE is ever worth revisiting (e.g. multiple concurrent
+> services, or workloads that don't fit Cloud Run's request/response model).
+
 Single-replica deployment on GKE Autopilot, fronted by a GCE Ingress with a
 Google-managed HTTPS certificate. The app is single-user with a SQLite file
 on a `ReadWriteOnce` PersistentVolumeClaim, so this intentionally never runs
