@@ -111,6 +111,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.hordeClear {
+  padding-right: calc(var(--mark-size) - 8px);
 }
 
 .confirmed .raidName {
@@ -129,4 +134,5 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  flex-shrink: 0;
 }
