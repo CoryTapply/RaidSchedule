@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import type { RaidEvent, TimelinePlacement } from '@raidschedule/shared';
 import { classColor } from './classColors.js';
-import { timeRangeLabel } from './format.js';
+import { timeLabel } from './format.js';
 import styles from '../styles/eventCard.module.css';
 
 export interface EventBlockProps {
@@ -40,7 +40,7 @@ export function EventBlock({ placement, onSelect }: EventBlockProps) {
       {event.isHorde && <div className={styles.hordeMark} data-testid="horde-mark" />}
       <span className={styles.raidName}>{event.raidName}</span>
       <span className={styles.metaLine}>
-        {timeRangeLabel(event.startsAt, event.endsAt)} · {event.character.name}
+        {timeLabel(event.startsAt)} · {event.character.name}
       </span>
     </div>
   );
