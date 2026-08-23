@@ -138,6 +138,28 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
             </div>
           </div>
 
+          <div className={styles.field}>
+            <span className={styles.label}>Faction</span>
+            <div className={styles.statusToggle}>
+              <button
+                type="button"
+                className={`${styles.statusOption} ${styles.factionOptionAlliance} ${!composer.isHorde ? styles.statusOptionSelected : ''}`}
+                onClick={() => onChange({ isHorde: false })}
+                aria-pressed={!composer.isHorde}
+              >
+                Alliance
+              </button>
+              <button
+                type="button"
+                className={`${styles.statusOption} ${styles.factionOptionHorde} ${composer.isHorde ? styles.statusOptionSelected : ''}`}
+                onClick={() => onChange({ isHorde: true })}
+                aria-pressed={composer.isHorde}
+              >
+                Horde
+              </button>
+            </div>
+          </div>
+
           <div className={styles.recurrenceRow}>
             <span className={styles.recurrenceDot} />
             <span>One-time event</span>

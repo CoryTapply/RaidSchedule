@@ -132,9 +132,23 @@ describe('EventDetailDialog', () => {
     expect(screen.getByRole('button', { name: 'Remove Horde tag' })).toBeInTheDocument();
   });
 
-  it('does not render a Horde toggle for a custom event', () => {
-    render(<EventDetailDialog event={customEvent} onClose={vi.fn()} onToggleHorde={vi.fn()} />);
+  it('does not render a Horde toggle for a custom event when onToggleHorde is not provided', () => {
+    render(<EventDetailDialog event={customEvent} onClose={vi.fn()} />);
     expect(screen.queryByRole('button', { name: /horde/i })).not.toBeInTheDocument();
+  });
+
+  it('offers to mark a non-Horde custom event as Horde, and calls onToggleHorde when clicked', async () => {
+    const onToggleHorde = vi.fn();
+    render(<EventDetailDialog event={customEvent} onClose={vi.fn()} onToggleHorde={onToggleHorde} />);
+
+    const toggleButton = screen.getByRole('button', { name: 'Mark as Horde' });
+    await userEvent.click(toggleButton);
+    expect(onToggleHorde).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers to remove the Horde tag from an already-tagged custom event', () => {
+    render(<EventDetailDialog event={{ ...customEvent, isHorde: true }} onClose={vi.fn()} onToggleHorde={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Remove Horde tag' })).toBeInTheDocument();
   });
 
   it('disables the Horde toggle and shows progress text while updating', () => {

@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { isHordeTitle, type CreateCustomEventInput, type RaidEvent, type RosterStatus, type WowClass } from '@raidschedule/shared';
+import type { CreateCustomEventInput, RaidEvent, RosterStatus, WowClass } from '@raidschedule/shared';
 import type Database from 'better-sqlite3';
 
 interface CustomEventRow {
@@ -11,6 +11,7 @@ interface CustomEventRow {
   character_name: string;
   character_class_name: WowClass | 'Unknown';
   character_spec: string | null;
+  is_horde: number;
 }
 
 function rowToRaidEvent(row: CustomEventRow): RaidEvent {
@@ -26,7 +27,7 @@ function rowToRaidEvent(row: CustomEventRow): RaidEvent {
       className: row.character_class_name,
       spec: row.character_spec ?? undefined,
     },
-    isHorde: isHordeTitle(row.raid_name),
+    isHorde: Boolean(row.is_horde),
   };
 }
 
@@ -47,11 +48,19 @@ export function updateCustomEventStatus(db: Database.Database, id: string, statu
   return rowToRaidEvent(row);
 }
 
+export function updateCustomEventFaction(db: Database.Database, id: string, isHorde: boolean): RaidEvent | null {
+  const result = db.prepare('UPDATE custom_events SET is_horde = ? WHERE id = ?').run(isHorde ? 1 : 0, id);
+  if (result.changes === 0) return null;
+  const row = db.prepare('SELECT * FROM custom_events WHERE id = ?').get(id) as CustomEventRow;
+  return rowToRaidEvent(row);
+}
+
 export function insertCustomEvent(db: Database.Database, input: CreateCustomEventInput): RaidEvent {
   const id = randomUUID();
+  const isHorde = input.isHorde ? 1 : 0;
   db.prepare(
-    `INSERT INTO custom_events (id, raid_name, starts_at, ends_at, status, character_name, character_class_name, character_spec)
-     VALUES (@id, @raidName, @startsAt, @endsAt, @status, @characterName, @characterClassName, @characterSpec)`,
+    `INSERT INTO custom_events (id, raid_name, starts_at, ends_at, status, character_name, character_class_name, character_spec, is_horde)
+     VALUES (@id, @raidName, @startsAt, @endsAt, @status, @characterName, @characterClassName, @characterSpec, @isHorde)`,
   ).run({
     id,
     raidName: input.raidName,
@@ -61,6 +70,7 @@ export function insertCustomEvent(db: Database.Database, input: CreateCustomEven
     characterName: input.character.name,
     characterClassName: input.character.className,
     characterSpec: input.character.spec ?? null,
+    isHorde,
   });
   return rowToRaidEvent({
     id,
@@ -71,5 +81,6 @@ export function insertCustomEvent(db: Database.Database, input: CreateCustomEven
     character_name: input.character.name,
     character_class_name: input.character.className,
     character_spec: input.character.spec ?? null,
+    is_horde: isHorde,
   });
 }

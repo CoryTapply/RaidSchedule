@@ -15,6 +15,7 @@ export interface ComposerState {
   character: string;
   cls: WowClass;
   status: RosterStatus;
+  isHorde: boolean;
   saving: boolean;
   saveError: string | null;
 }

@@ -41,6 +41,19 @@ export async function confirmCustomEvent(id: string, signal?: AbortSignal): Prom
   return (await res.json()) as RaidEvent;
 }
 
+export async function setCustomEventFaction(id: string, isHorde: boolean, signal?: AbortSignal): Promise<RaidEvent> {
+  const res = await fetch(`/api/events/${encodeURIComponent(id)}/horde`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ isHorde }),
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to update Horde tag (${res.status})`);
+  }
+  return (await res.json()) as RaidEvent;
+}
+
 export interface SetHordeTagResult {
   raidHelperEventId: string;
   isHorde: boolean;

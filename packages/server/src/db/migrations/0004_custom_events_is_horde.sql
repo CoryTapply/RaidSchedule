@@ -1,0 +1,1 @@
+ALTER TABLE custom_events ADD COLUMN is_horde INTEGER NOT NULL DEFAULT 0;

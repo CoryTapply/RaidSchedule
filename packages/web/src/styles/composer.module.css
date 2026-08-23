@@ -158,6 +158,18 @@
   color: #f4f1ff;
 }
 
+.factionOptionAlliance.statusOptionSelected {
+  border: 1px solid rgba(90, 168, 255, 0.75);
+  background: linear-gradient(135deg, rgba(90, 168, 255, 0.4), rgba(90, 168, 255, 0.12));
+  color: #f4f1ff;
+}
+
+.factionOptionHorde.statusOptionSelected {
+  border: 1px solid rgba(255, 75, 75, 0.75);
+  background: linear-gradient(135deg, rgba(255, 75, 75, 0.4), rgba(255, 75, 75, 0.12));
+  color: #f4f1ff;
+}
+
 .recurrenceRow {
   display: flex;
   align-items: center;
