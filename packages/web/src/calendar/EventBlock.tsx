@@ -38,8 +38,8 @@ export function EventBlock({ placement, onSelect }: EventBlockProps) {
     >
       <div className={styles.rail} />
       {event.isHorde && <div className={styles.hordeMark} data-testid="horde-mark" />}
-      <span className={styles.raidName}>{event.raidName}</span>
-      <span className={styles.metaLine}>
+      <span className={`${styles.raidName} ${event.isHorde ? styles.hordeClear : ''}`}>{event.raidName}</span>
+      <span className={`${styles.metaLine} ${event.isHorde ? styles.hordeClear : ''}`}>
         {timeLabel(event.startsAt)} · {event.character.name}
       </span>
     </div>
