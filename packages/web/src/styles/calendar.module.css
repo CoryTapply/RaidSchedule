@@ -108,14 +108,43 @@
   gap: var(--space-4);
 }
 
-.titleBlock {
+.titleRow {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: var(--space-2);
+  --logo-height: calc(var(--header-title-size) * 2.6);
+}
+
+.logoLink {
+  display: inline-flex;
+  line-height: 0;
+}
+
+.logo {
+  display: block;
+  height: var(--logo-height);
+  width: var(--logo-height);
+}
+
+/*
+ * Within the logo's 100x100 viewBox, the "Z" glyph itself only spans
+ * y 18.8-75.2 (the rest is transparent margin in the source asset, which
+ * we don't touch). Position the title/date text by those same fractions
+ * of --logo-height so their top/bottom line up with the glyph's top/bottom
+ * rather than the logo's full square bounds.
+ */
+.titleBlock {
+  position: relative;
+  width: max-content;
+  height: var(--logo-height);
 }
 
 .title {
-  font: 500 var(--header-title-size) / 1.2 var(--font-heading);
+  position: absolute;
+  top: calc(var(--logo-height) * 0.188);
+  margin: 0;
+  white-space: nowrap;
+  font: 500 var(--header-title-size) / 0.9 var(--font-heading);
   background: linear-gradient(92deg, #ffffff 0%, #c9b8ff 45%, #f7a8e8 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -123,7 +152,11 @@
 }
 
 .rangeLabel {
-  font: 400 var(--range-size) var(--font-body);
+  position: absolute;
+  bottom: calc(var(--logo-height) * 0.248);
+  margin: 0;
+  white-space: nowrap;
+  font: 400 var(--range-size) / 0.9 var(--font-body);
   color: rgba(214, 208, 255, 0.6);
 }
 
