@@ -7,9 +7,8 @@ restores from it on boot (see `entrypoint.sh` and `litestream.yml` at the
 repo root, and the comment in `Dockerfile`).
 
 At "a handful of requests/day" this runs close to $0/month — Cloud Run bills
-per-request/CPU-time with `min-instances=0`, versus GKE Autopilot's ~$100/mo
-for the same traffic (flat cluster fee + always-on pod + LB forwarding
-rules; see the note at the top of `deploy/k8s/README.md`).
+per-request/CPU-time with `min-instances=0`, so there's no charge while idle
+and no other fixed infrastructure cost.
 
 `max-instances=1` is required, not just a cost optimization: SQLite is
 single-writer, and Litestream itself isn't safe with more than one instance
@@ -31,8 +30,9 @@ gcloud storage buckets create gs://<PROJECT>-litestream --project=<PROJECT> --lo
 
 ## 3. Build and push the image
 
-Must target `linux/amd64` if building on Apple Silicon (Cloud Run, like GKE,
-runs amd64):
+Must target `linux/amd64` if building on Apple Silicon — Cloud Run runs
+amd64, and a plain `docker build` on an M-series Mac produces an arm64
+image that fails at container start with `exec format error`:
 
 ```sh
 docker buildx build --platform linux/amd64 \
@@ -107,7 +107,7 @@ gcloud beta run domain-mappings create --service=raidschedule --domain=<your-dom
 
 This prints the DNS record to add — typically a `CNAME` to
 `ghs.googlehosted.com.`. If the domain previously pointed elsewhere (e.g. an
-`A` record from a prior GKE Ingress), **replace** that record rather than
+old `A` record from some other host), **replace** that record rather than
 adding the CNAME alongside it; a name can't have both.
 
 **Expect a real delay here if you're switching DNS from an existing record**,
@@ -131,8 +131,9 @@ domain is delayed.
 
 ## Redeploying after a code change
 
-Always push under a new tag (Cloud Run, like the GKE setup this replaced,
-won't re-pull a tag it's already resolved):
+Always push under a new tag — Cloud Run won't re-pull a tag it's already
+resolved, so reusing one after pushing new content under it will silently
+keep running the old image:
 
 ```sh
 docker buildx build --platform linux/amd64 \
@@ -141,7 +142,7 @@ docker buildx build --platform linux/amd64 \
 gcloud run deploy raidschedule --image=<REGION>-docker.pkg.dev/<PROJECT>/raidschedule/raidschedule:<NEW_TAG> --region=<REGION> --project=<PROJECT>
 ```
 
-Cloud Run's revision model means this is a clean rollout on its own (no
-`Recreate`-strategy trick needed like on GKE) — but `max-instances=1` still
-matters here for the same underlying reason: Litestream and SQLite both
+Cloud Run's revision model makes this a clean rollout on its own — no manual
+stop/start ordering needed — but `max-instances=1` still matters here for
+the same underlying reason it's set at all: Litestream and SQLite both
 assume a single writer.

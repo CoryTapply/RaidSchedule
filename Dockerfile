@@ -25,7 +25,7 @@ ENV DB_PATH=/data/raidschedule.db
 
 # Litestream: streams the SQLite WAL to object storage and restores from it
 # on boot. Needed on Cloud Run (ephemeral local disk between cold starts);
-# a no-op on GKE/docker-compose, where a real volume already persists /data
+# a no-op with docker-compose, where a real volume already persists /data
 # — entrypoint.sh only invokes it when LITESTREAM_BUCKET is set.
 COPY --from=litestream/litestream:latest /usr/local/bin/litestream /usr/local/bin/litestream
 COPY litestream.yml /app/litestream.yml

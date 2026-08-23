@@ -15,4 +15,3 @@ prompt/
 *.sqlite-wal
 *.sqlite-shm
 coverage/
-deploy/k8s/secret.yaml
