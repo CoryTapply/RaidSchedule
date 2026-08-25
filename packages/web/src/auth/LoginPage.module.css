@@ -1,0 +1,25 @@
+.wrap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--zp-space-4);
+  padding: var(--zp-space-5);
+}
+
+.title {
+  font: var(--zp-text-h3);
+  color: var(--zp-text);
+}
+
+.error {
+  font: var(--zp-text-sm);
+  color: var(--zp-danger-text);
+}

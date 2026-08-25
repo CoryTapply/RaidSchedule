@@ -1,5 +1,6 @@
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import type { RaidEvent } from '@raidschedule/shared';
 import { TimelineDayCell } from './TimelineDayCell.js';
 import type { CalendarDay } from './useCalendarState.js';
 
@@ -30,6 +31,7 @@ describe('TimelineDayCell', () => {
         window={window}
         hours={hours}
         onSelectEvent={vi.fn()}
+        onEditEvent={vi.fn()}
         onEnter={vi.fn()}
         onLeave={vi.fn()}
         onOpenComposer={onOpenComposer}
@@ -56,6 +58,7 @@ describe('TimelineDayCell', () => {
         window={window}
         hours={hours}
         onSelectEvent={vi.fn()}
+        onEditEvent={vi.fn()}
         onEnter={onEnter}
         onLeave={onLeave}
         onOpenComposer={vi.fn()}
@@ -67,5 +70,40 @@ describe('TimelineDayCell', () => {
     expect(onEnter).toHaveBeenCalledWith('2026-08-11');
     fireEvent.mouseLeave(cell);
     expect(onLeave).toHaveBeenCalledTimes(1);
+  });
+
+  it('right-clicking an event calls onEditEvent instead of opening the day composer', () => {
+    const onEditEvent = vi.fn();
+    const onOpenComposer = vi.fn();
+    const raidEvent: RaidEvent = {
+      id: 'evt-1',
+      source: 'raid-helper',
+      raidName: 'Nerub-ar Palace',
+      startsAt: '2026-08-18T20:00:00.000Z',
+      endsAt: '2026-08-18T23:00:00.000Z',
+      status: 'confirmed',
+      character: { name: 'Thrashclaw', className: 'Druid' },
+    };
+    const day = makeDay({ events: [raidEvent] });
+
+    render(
+      <TimelineDayCell
+        day={day}
+        window={window}
+        hours={hours}
+        onSelectEvent={vi.fn()}
+        onEditEvent={onEditEvent}
+        onEnter={vi.fn()}
+        onLeave={vi.fn()}
+        onOpenComposer={onOpenComposer}
+      />,
+    );
+
+    fireEvent.contextMenu(screen.getByRole('button'), { clientX: 42, clientY: 24 });
+
+    expect(onEditEvent).toHaveBeenCalledTimes(1);
+    expect(onEditEvent.mock.calls[0]![0]).toBe(raidEvent);
+    expect(onEditEvent.mock.calls[0]![1]).toMatchObject({ clientX: 42, clientY: 24 });
+    expect(onOpenComposer).not.toHaveBeenCalled();
   });
 });

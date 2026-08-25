@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
+import { Button, Field, Input, PageShell, Panel } from '../design-system/zerpy/components/index.js';
 import { useAuth } from './AuthProvider.js';
+import styles from './LoginPage.module.css';
 
 export function LoginPage() {
   const { login, loginError } = useAuth();
@@ -17,42 +19,32 @@ export function LoginPage() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        background: 'var(--color-bg)',
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        className="card elev-md"
-        style={{ width: 320, display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
-      >
-        <div className="card-title">Raid Calendar</div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            className="input"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoFocus
-            required
-          />
-        </div>
-        {loginError && (
-          <div style={{ color: '#e5484d', fontSize: 13 }} role="alert">
-            {loginError}
-          </div>
-        )}
-        <button type="submit" className="btn btn-primary btn-block" disabled={submitting || password.length === 0}>
-          {submitting ? 'Signing in…' : 'Sign in'}
-        </button>
-      </form>
-    </div>
+    <PageShell maxWidth="320px">
+      <div className={styles.wrap}>
+        <Panel>
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <span className={styles.title}>Raid Calendar</span>
+            <Field label="Password">
+              <Input
+                aria-label="Password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoFocus
+                required
+              />
+            </Field>
+            {loginError && (
+              <span className={styles.error} role="alert">
+                {loginError}
+              </span>
+            )}
+            <Button type="submit" intent="primary" disabled={submitting || password.length === 0}>
+              {submitting ? 'Signing in…' : 'Sign in'}
+            </Button>
+          </form>
+        </Panel>
+      </div>
+    </PageShell>
   );
 }

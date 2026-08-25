@@ -8,12 +8,13 @@ import styles from '../styles/calendar.module.css';
 export interface WeekRowProps {
   days: CalendarDay[];
   onSelectEvent: (event: RaidEvent) => void;
+  onEditEvent: (event: RaidEvent, e: { clientX: number; clientY: number }) => void;
   onEnterDay: (lockoutWeekKey: string) => void;
   onLeaveDay: () => void;
   onOpenComposer: (day: CalendarDay, e: { clientX: number; clientY: number }) => void;
 }
 
-export function WeekRow({ days, onSelectEvent, onEnterDay, onLeaveDay, onOpenComposer }: WeekRowProps) {
+export function WeekRow({ days, onSelectEvent, onEditEvent, onEnterDay, onLeaveDay, onOpenComposer }: WeekRowProps) {
   const window = useMemo(
     () => computeRowWindow(days.flatMap((d) => d.events), DEFAULT_START_HOUR, DEFAULT_END_HOUR),
     [days],
@@ -43,6 +44,7 @@ export function WeekRow({ days, onSelectEvent, onEnterDay, onLeaveDay, onOpenCom
           window={window}
           hours={hours}
           onSelectEvent={onSelectEvent}
+          onEditEvent={onEditEvent}
           onEnter={onEnterDay}
           onLeave={onLeaveDay}
           onOpenComposer={onOpenComposer}

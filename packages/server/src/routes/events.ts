@@ -2,14 +2,9 @@ import { isHordeTitle, WOW_CLASSES, type EventsResponse } from '@raidschedule/sh
 import type Database from 'better-sqlite3';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import {
-  deleteCustomEvent,
-  insertCustomEvent,
-  listCustomEvents,
-  updateCustomEventFaction,
-  updateCustomEventStatus,
-} from '../db/customEvents.js';
+import { deleteCustomEvent, insertCustomEvent, listCustomEvents, updateCustomEvent } from '../db/customEvents.js';
 import { getHordeTags, setHordeTag } from '../db/hordeTags.js';
+import { applyRaidHelperOverride, getRaidHelperOverrides, setRaidHelperOverride } from '../db/raidHelperOverrides.js';
 import { fetchRaidHelperEvents, RaidHelperError } from '../integrations/raidHelper/client.js';
 import { normalizeRaidHelperEvent } from '../integrations/raidHelper/normalize.js';
 import type { RawRaidHelperEvent } from '../integrations/raidHelper/types.js';
@@ -26,16 +21,9 @@ function isWithinLookback(event: RawRaidHelperEvent, cutoffSeconds: number): boo
   return event.startTime >= cutoffSeconds;
 }
 
-const updateCustomEventStatusSchema = z.object({
-  status: z.enum(['pending', 'confirmed']),
-});
-
-const setHordeTagSchema = z.object({
-  isHorde: z.boolean(),
-});
-
-const setCustomEventFactionSchema = z.object({
-  isHorde: z.boolean(),
+const characterPatchSchema = z.object({
+  name: z.string().min(1),
+  className: z.enum([...WOW_CLASSES, 'Unknown']),
 });
 
 const createCustomEventSchema = z.object({
@@ -51,15 +39,37 @@ const createCustomEventSchema = z.object({
   isHorde: z.boolean(),
 });
 
+/** A PATCH only writes the keys it's given — every field here is optional. */
+const updateCustomEventSchema = z.object({
+  raidName: z.string().min(1).optional(),
+  startsAt: z.string().min(1).optional(),
+  endsAt: z.string().min(1).optional(),
+  status: z.enum(['pending', 'confirmed']).optional(),
+  character: characterPatchSchema.optional(),
+  isHorde: z.boolean().optional(),
+});
+
+/** The raid's own schedule always comes from raid-helper.xyz — only identity fields and the local Horde tag are overridable. */
+const raidHelperOverrideSchema = z.object({
+  raidName: z.string().min(1).optional(),
+  character: characterPatchSchema.optional(),
+  status: z.enum(['pending', 'confirmed']).optional(),
+  isHorde: z.boolean().optional(),
+});
+
+const RAID_HELPER_EVENT_ID_PATTERN = /^raid-helper:([^:]+):[^:]+$/;
+
 export function registerEventRoutes(fastify: FastifyInstance, raidHelperApiKey: string, db: Database.Database): void {
   fastify.get('/api/events', { preHandler: requireAuth }, async (_request, reply) => {
     try {
       const raw = await fetchRaidHelperEvents(raidHelperApiKey);
       const cutoffSeconds = Math.floor(Date.now() / 1000) - LOOKBACK_DAYS * 86_400;
       const hordeTags = getHordeTags(db);
+      const overrides = getRaidHelperOverrides(db);
       const events = raw
         .filter((event) => isWithinLookback(event, cutoffSeconds))
-        .flatMap((event) => normalizeRaidHelperEvent(event, hordeTags.get(event.id) ?? isHordeTitle(event.title)));
+        .flatMap((event) => normalizeRaidHelperEvent(event, hordeTags.get(event.id) ?? isHordeTitle(event.title)))
+        .map((event) => applyRaidHelperOverride(event, overrides.get(event.id)));
       events.push(...listCustomEvents(db));
       const body: EventsResponse = { events };
       return reply.send(body);
@@ -86,27 +96,11 @@ export function registerEventRoutes(fastify: FastifyInstance, raidHelperApiKey: 
     if (!id.startsWith('custom:')) {
       return reply.code(400).send({ error: 'invalid_request' });
     }
-    const body = updateCustomEventStatusSchema.safeParse(request.body);
+    const body = updateCustomEventSchema.safeParse(request.body);
     if (!body.success) {
       return reply.code(400).send({ error: 'invalid_request' });
     }
-    const event = updateCustomEventStatus(db, id.slice('custom:'.length), body.data.status);
-    if (!event) {
-      return reply.code(404).send({ error: 'not_found' });
-    }
-    return reply.send(event);
-  });
-
-  fastify.put('/api/events/:id/horde', { preHandler: requireAuth }, async (request, reply) => {
-    const { id } = request.params as { id: string };
-    if (!id.startsWith('custom:')) {
-      return reply.code(400).send({ error: 'invalid_request' });
-    }
-    const body = setCustomEventFactionSchema.safeParse(request.body);
-    if (!body.success) {
-      return reply.code(400).send({ error: 'invalid_request' });
-    }
-    const event = updateCustomEventFaction(db, id.slice('custom:'.length), body.data.isHorde);
+    const event = updateCustomEvent(db, id.slice('custom:'.length), body.data);
     if (!event) {
       return reply.code(404).send({ error: 'not_found' });
     }
@@ -125,13 +119,31 @@ export function registerEventRoutes(fastify: FastifyInstance, raidHelperApiKey: 
     return reply.code(204).send();
   });
 
-  fastify.put('/api/raid-helper-events/:raidHelperEventId/horde', { preHandler: requireAuth }, async (request, reply) => {
-    const { raidHelperEventId } = request.params as { raidHelperEventId: string };
-    const body = setHordeTagSchema.safeParse(request.body);
+  /**
+   * Local override for a Raid-Helper-sourced event: `eventId` is the full
+   * `RaidEvent.id` (`raid-helper:{raidHelperEventId}:{signUpId}`), since
+   * identity fields (title/character/status) are overridden per sign-up.
+   * `isHorde` is the exception — it's stored per `raidHelperEventId` (the
+   * whole raid), reusing the pre-existing horde-tag mechanism.
+   */
+  fastify.patch('/api/raid-helper-events/:eventId/override', { preHandler: requireAuth }, async (request, reply) => {
+    const { eventId } = request.params as { eventId: string };
+    const match = RAID_HELPER_EVENT_ID_PATTERN.exec(eventId);
+    if (!match) {
+      return reply.code(400).send({ error: 'invalid_request' });
+    }
+    const raidHelperEventId = match[1]!;
+    const body = raidHelperOverrideSchema.safeParse(request.body);
     if (!body.success) {
       return reply.code(400).send({ error: 'invalid_request' });
     }
-    setHordeTag(db, raidHelperEventId, body.data.isHorde);
-    return reply.send({ raidHelperEventId, isHorde: body.data.isHorde });
+    const { raidName, character, status, isHorde } = body.data;
+    if (isHorde !== undefined) {
+      setHordeTag(db, raidHelperEventId, isHorde);
+    }
+    if (raidName !== undefined || character !== undefined || status !== undefined) {
+      setRaidHelperOverride(db, eventId, { raidName, characterName: character?.name, characterClassName: character?.className, status });
+    }
+    return reply.send({ eventId, raidHelperEventId, raidName, character, status, isHorde });
   });
 }

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="nebula-tokens.css">
+  <style>body{margin:0;background:#08080f;}a{color:#a99cf0;text-decoration:none;}a:hover{color:#c4bbff;}</style>
+</helmet>
+<div style="position:relative;box-sizing:border-box;min-height:100vh;padding:var(--nb-space-9) var(--nb-space-8) var(--nb-space-10);color:var(--nb-text);font-family:var(--nb-font-body);background:var(--nb-ground);overflow:hidden;">
+  <div style="position:absolute;inset:0;pointer-events:none;opacity:.3;background-image:var(--nb-starfield);"></div>
+
+  <div style="position:relative;max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:var(--nb-space-10);">
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-3);">
+      <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-accent-400);">Nebula · Foundations</span>
+      <span style="font:var(--nb-text-display);letter-spacing:var(--nb-tracking-tight);background:var(--nb-gradient-text);-webkit-background-clip:text;background-clip:text;color:transparent;">A dark glass system</span>
+      <span style="font:var(--nb-text-lg);color:var(--nb-text-3);max-width:60ch;">The space theme is carried by the ground, not the components: a dim radial glow, a faint starfield, one saturated accent. Surfaces are translucent tints over that ground, edges are hairlines, and depth is a border plus a blur plus one soft ambient shadow. Everything on this page reads from <a href="nebula-tokens.css">nebula-tokens.css</a>.</span>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+        <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">01 · Color</span>
+        <span style="font:var(--nb-text-h2);">Ground, surface, line, accent</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:var(--nb-space-3);">
+        <sc-for list="{{ grounds }}" as="g" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;gap:var(--nb-space-2);">
+            <div style="height:74px;border-radius:var(--nb-radius);border:1px solid var(--nb-line);background:{{ g.value }};box-shadow:var(--nb-elev-panel);backdrop-filter:blur(var(--nb-blur-md));"></div>
+            <div style="display:flex;flex-direction:column;gap:1px;">
+              <span style="font:var(--nb-text-label);color:var(--nb-text-2);">{{ g.name }}</span>
+              <span style="font:var(--nb-text-micro);color:var(--nb-text-4);">{{ g.token }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-2);">
+        <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">Accent ramp</span>
+        <div style="display:flex;border-radius:var(--nb-radius);overflow:hidden;border:1px solid var(--nb-line);">
+          <sc-for list="{{ accentRamp }}" as="a" hint-placeholder-count="9">
+            <div style="flex:1;height:56px;background:{{ a.value }};display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;">
+              <span style="font:var(--nb-text-micro);color:{{ a.label }};">{{ a.step }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <span style="font:var(--nb-text-sm);color:var(--nb-text-3);max-width:70ch;">500 is the base. Use 800–900 for tinted fills and hovers, 400 for links and hovered borders, 200–300 for accent text on dark. Body-size accent text always comes from 200–300, never the base.</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:var(--nb-space-3);">
+        <sc-for list="{{ statuses }}" as="s" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:var(--nb-space-3);padding:var(--nb-space-3);border-radius:var(--nb-radius);border:1px solid var(--nb-line);background:{{ s.tint }};">
+            <span style="width:10px;height:10px;border-radius:var(--nb-radius-xs);background:{{ s.value }};box-shadow:0 0 10px {{ s.value }};"></span>
+            <div style="display:flex;flex-direction:column;">
+              <span style="font:var(--nb-text-label);color:var(--nb-text);">{{ s.name }}</span>
+              <span style="font:var(--nb-text-micro);color:var(--nb-text-4);">{{ s.token }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+        <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">02 · Type</span>
+        <span style="font:var(--nb-text-h2);">Instrument Sans, with Roboto Mono for data</span>
+      </div>
+      <span style="font:var(--nb-text-sm);color:var(--nb-text-3);max-width:70ch;">Neutral tracking; hierarchy comes from size and space, not weight — nothing goes past 500. Mono carries numbers, table figures and the uppercase micro-labels that head each section.</span>
+
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-4);padding:var(--nb-space-6);border-radius:var(--nb-radius);border:1px solid var(--nb-line);background:var(--nb-surface-panel);backdrop-filter:blur(var(--nb-blur-md));box-shadow:var(--nb-elev-panel);">
+        <sc-for list="{{ typeScale }}" as="t" hint-placeholder-count="8">
+          <div style="display:flex;align-items:baseline;gap:var(--nb-space-5);">
+            <span style="flex:0 0 116px;font:var(--nb-text-micro);color:var(--nb-text-4);">{{ t.token }}</span>
+            <span style="font:{{ t.font }};letter-spacing:{{ t.tracking }};color:{{ t.color }};text-transform:{{ t.transform }};">{{ t.sample }}</span>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:var(--nb-space-6);padding:var(--nb-space-5) var(--nb-space-6);border-radius:var(--nb-radius);border:1px solid var(--nb-line);background:var(--nb-surface-1);">
+        <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+          <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">Data</span>
+          <span style="font:500 26px var(--nb-font-data);font-variant-numeric:tabular-nums;color:var(--nb-text);">18:30 · 92% · 4/8</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+          <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">Figures align</span>
+          <span style="font:var(--nb-text-data);font-variant-numeric:tabular-nums;color:var(--nb-text-2);">1234567890 · 0O1lI</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+        <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">03 · Space &amp; shape</span>
+        <span style="font:var(--nb-text-h2);">4px grid, 4px corners</span>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:var(--nb-space-3);flex-wrap:wrap;">
+        <sc-for list="{{ spaceScale }}" as="s" hint-placeholder-count="10">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:var(--nb-space-2);">
+            <div style="width:{{ s.size }};height:{{ s.size }};border-radius:var(--nb-radius-xs);background:var(--nb-accent-tint-strong);border:1px solid var(--nb-line-accent);"></div>
+            <span style="font:var(--nb-text-micro);color:var(--nb-text-4);">{{ s.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;gap:var(--nb-space-4);flex-wrap:wrap;">
+        <sc-for list="{{ radii }}" as="r" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:var(--nb-space-2);">
+            <div style="width:120px;height:60px;border-radius:{{ r.value }};border:1px solid var(--nb-line-strong);background:var(--nb-surface-2);"></div>
+            <span style="font:var(--nb-text-micro);color:var(--nb-text-4);">{{ r.label }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+        <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">04 · Depth</span>
+        <span style="font:var(--nb-text-h2);">Border, blur, one soft shadow</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:var(--nb-space-4);">
+        <sc-for list="{{ elevations }}" as="e" hint-placeholder-count="3">
+          <div style="box-sizing:border-box;padding:var(--nb-space-5);border-radius:var(--nb-radius);border:1px solid {{ e.border }};background:{{ e.bg }};backdrop-filter:blur({{ e.blur }});box-shadow:{{ e.shadow }};display:flex;flex-direction:column;gap:var(--nb-space-2);min-height:118px;">
+            <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-accent-400);">{{ e.name }}</span>
+            <span style="font:var(--nb-text-label);color:var(--nb-text);">{{ e.use }}</span>
+            <span style="font:var(--nb-text-sm);color:var(--nb-text-3);">{{ e.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-5);">
+      <div style="display:flex;flex-direction:column;gap:var(--nb-space-1);">
+        <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">05 · Rules</span>
+        <span style="font:var(--nb-text-h2);">Do and don't</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:var(--nb-space-5);">
+        <div style="display:flex;flex-direction:column;gap:var(--nb-space-3);padding:var(--nb-space-5);border-radius:var(--nb-radius);border:1px solid rgba(94,196,138,.28);background:var(--nb-success-tint);">
+          <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-success);">Do</span>
+          <sc-for list="{{ dos }}" as="d" hint-placeholder-count="5">
+            <span style="font:var(--nb-text-sm);color:var(--nb-text-2);">{{ d }}</span>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:var(--nb-space-3);padding:var(--nb-space-5);border-radius:var(--nb-radius);border:1px solid rgba(232,99,107,.28);background:var(--nb-danger-tint);">
+          <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-danger);">Don't</span>
+          <sc-for list="{{ donts }}" as="d" hint-placeholder-count="5">
+            <span style="font:var(--nb-text-sm);color:var(--nb-text-2);">{{ d }}</span>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:var(--nb-space-4);padding:var(--nb-space-6);border-radius:var(--nb-radius);border:1px dashed var(--nb-line-strong);background:var(--nb-surface-1);">
+      <span style="font:var(--nb-text-micro);letter-spacing:var(--nb-tracking-micro);text-transform:uppercase;color:var(--nb-text-4);">Add-on layer · optional</span>
+      <span style="font:var(--nb-text-h3);color:var(--nb-text);">Game vocabulary</span>
+      <span style="font:var(--nb-text-sm);color:var(--nb-text-3);max-width:66ch;">Class colors and faction marks live at the bottom of the token file and are only loaded by guild projects. They are the one place saturated color is allowed to identify content rather than state.</span>
+      <div style="display:flex;flex-wrap:wrap;gap:var(--nb-space-2);">
+        <sc-for list="{{ classColors }}" as="c" hint-placeholder-count="13">
+          <div style="display:flex;align-items:center;gap:7px;padding:5px 10px 5px 7px;border-radius:var(--nb-radius);border:1px solid var(--nb-line);background:var(--nb-surface-2);">
+            <span style="width:3px;height:14px;border-radius:1px;background:{{ c.value }};"></span>
+            <span style="font:var(--nb-text-micro);color:var(--nb-text-2);">{{ c.name }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      grounds: [
+        { name: 'Page ground', token: '--nb-ground', value: 'var(--nb-ground)' },
+        { name: 'Floor', token: '--nb-bg', value: 'var(--nb-bg)' },
+        { name: 'Surface 1', token: '--nb-surface-1', value: 'var(--nb-surface-1)' },
+        { name: 'Panel', token: '--nb-surface-panel', value: 'var(--nb-surface-panel)' },
+        { name: 'Overlay', token: '--nb-surface-overlay', value: 'var(--nb-surface-overlay)' },
+      ],
+      accentRamp: [100,200,300,400,500,600,700,800,900].map(step => ({
+        step,
+        value: step === 500 ? 'var(--nb-accent)' : `var(--nb-accent-${step})`,
+        label: step <= 300 ? 'rgba(20,18,40,.75)' : 'rgba(242,241,251,.85)',
+      })),
+      statuses: [
+        { name: 'Success', token: '--nb-success', value: 'var(--nb-success)', tint: 'var(--nb-success-tint)' },
+        { name: 'Warning', token: '--nb-warning', value: 'var(--nb-warning)', tint: 'var(--nb-warning-tint)' },
+        { name: 'Danger', token: '--nb-danger', value: 'var(--nb-danger)', tint: 'var(--nb-danger-tint)' },
+        { name: 'Info', token: '--nb-info', value: 'var(--nb-info)', tint: 'var(--nb-info-tint)' },
+      ],
+      typeScale: [
+        { token: '--nb-text-display', font: 'var(--nb-text-display)', tracking: 'var(--nb-tracking-tight)', color: 'var(--nb-text)', transform: 'none', sample: 'Display 40' },
+        { token: '--nb-text-h1', font: 'var(--nb-text-h1)', tracking: 'normal', color: 'var(--nb-text)', transform: 'none', sample: 'Heading 30' },
+        { token: '--nb-text-h2', font: 'var(--nb-text-h2)', tracking: 'normal', color: 'var(--nb-text)', transform: 'none', sample: 'Heading 22' },
+        { token: '--nb-text-h3', font: 'var(--nb-text-h3)', tracking: 'normal', color: 'var(--nb-text)', transform: 'none', sample: 'Heading 18' },
+        { token: '--nb-text-lg', font: 'var(--nb-text-lg)', tracking: 'normal', color: 'var(--nb-text-2)', transform: 'none', sample: 'Body large 15.5 — the readable default for long copy' },
+        { token: '--nb-text-md', font: 'var(--nb-text-md)', tracking: 'normal', color: 'var(--nb-text-2)', transform: 'none', sample: 'Body 14 — interface copy and descriptions' },
+        { token: '--nb-text-sm', font: 'var(--nb-text-sm)', tracking: 'normal', color: 'var(--nb-text-3)', transform: 'none', sample: 'Small 12.5 — captions and helper text' },
+        { token: '--nb-text-micro', font: 'var(--nb-text-micro)', tracking: 'var(--nb-tracking-micro)', color: 'var(--nb-text-4)', transform: 'uppercase', sample: 'Micro label 10.5' },
+      ],
+      spaceScale: [1,2,3,4,5,6,7,8,9,10].map(n => {
+        const px = [4,8,12,16,20,24,32,40,56,72][n-1];
+        return { label: `${n} · ${px}`, size: `var(--nb-space-${n})` };
+      }),
+      radii: [
+        { label: 'xs · 2px', value: 'var(--nb-radius-xs)' },
+        { label: 'base · 4px', value: 'var(--nb-radius)' },
+        { label: 'md · 8px', value: 'var(--nb-radius-md)' },
+        { label: 'lg · 12px', value: 'var(--nb-radius-lg)' },
+      ],
+      elevations: [
+        { name: 'Flat', use: 'Rows, list items, inline tints', note: 'A surface tint and a hairline. No blur, no shadow.',
+          border: 'var(--nb-line)', bg: 'var(--nb-surface-1)', blur: '0px', shadow: 'var(--nb-elev-flat)' },
+        { name: 'Panel', use: 'Cards, grids, sidebars', note: 'Blur 14px and one soft ambient shadow.',
+          border: 'var(--nb-line)', bg: 'var(--nb-surface-panel)', blur: 'var(--nb-blur-md)', shadow: 'var(--nb-elev-panel)' },
+        { name: 'Overlay', use: 'Dialogs, popovers, menus', note: 'Blur 22px, deeper shadow, tinted glass.',
+          border: 'var(--nb-line-strong)', bg: 'var(--nb-surface-overlay)', blur: 'var(--nb-blur-lg)', shadow: 'var(--nb-elev-overlay)' },
+      ],
+      dos: [
+        'Let the ground carry the theme — the glow and starfield live on the page, never inside components.',
+        'Keep the accent to lines, marks and glows on active or selected state.',
+        'Use mono for numbers, table figures and micro-labels; sans for everything you read as a sentence.',
+        'Fade long rules at their ends inside dense grids (--nb-rule-fade).',
+        'Give every interactive element a hover tint and the 2px accent focus ring.',
+      ],
+      donts: [
+        'No opaque grey panels — surfaces are translucent tints so the ground shows through.',
+        'No stacked or hard shadows; one ambient shadow per elevation step is the whole vocabulary.',
+        'No nesting blur inside blur — the inner layer loses the effect and costs paint.',
+        'No weights above 500, and no gradient text below display sizes.',
+        'No saturated fills for decoration; saturation means state, or class identity in the add-on layer.',
+      ],
+      classColors: [
+        ['Death Knight','death-knight'],['Demon Hunter','demon-hunter'],['Druid','druid'],['Evoker','evoker'],
+        ['Hunter','hunter'],['Mage','mage'],['Monk','monk'],['Paladin','paladin'],['Priest','priest'],
+        ['Rogue','rogue'],['Shaman','shaman'],['Warlock','warlock'],['Warrior','warrior'],
+      ].map(([name, slug]) => ({ name, value: `var(--nb-class-${slug})` })),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

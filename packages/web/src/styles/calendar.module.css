@@ -1,137 +1,70 @@
 /*
- * Nebula timeline calendar. Sized with clamp()/cqi the same way the old flat
- * design was: a "standard" endpoint taken verbatim from
- * design/Raid Calendar Nebula.dc.html (container width 1600px, 1cqi = 16px)
- * and a "4K" endpoint at 2200px (1cqi = 22px). There is no 4K Nebula
- * reference file, so every token's 4K max below is a deliberate, uniform
- * ~1.2x of its standard min — a judgment call, not a documented spec, kept
- * consistent across all tokens (an earlier pass extrapolated per-token
- * ratios anywhere from 1.25x to 2.4x, which read as visually unbalanced and
- * — combined with .content's max-width not scaling — oversized once the
- * container passed ~2200px). If you need to retune a value, recompute both
- * endpoints (MIN from the .dc.html, MAX = round_half(MIN * 1.2)) rather than
- * eyeballing a new coefficient. Padding/gaps are deliberately NOT part of
- * this clamp system — the Nebula design ties those to the design system's
- * fixed --space-* scale instead (see every `var(--space-N)` in the
- * .dc.html), so they're used directly, unscaled, below.
+ * Zerpy calendar grid. Geometry that's specific to the timeline (gutter
+ * width, px-per-hour, the top padding reserved for the day number) is kept
+ * as literal px per the design prompt and the prototype's own JS constants
+ * — there's no 4K Zerpy reference file to interpolate a second endpoint
+ * from (unlike the old Nebula pair), so it isn't run through clamp(). Type
+ * size, spacing and control heights all come from --zp-* tokens instead,
+ * which already scale with the viewport on their own (see
+ * design-system/zerpy/tokens/scale.css) — no need to reimplement that here.
  */
-.root {
-  position: relative;
-  container: calendar / inline-size;
-  min-height: 100vh;
-  color: #eae8ff;
-  box-sizing: border-box;
-  overflow: hidden;
-  padding: var(--space-6);
-  background:
-    radial-gradient(120% 80% at 12% -10%, #2b1b6b 0%, rgba(43, 27, 107, 0) 55%),
-    radial-gradient(90% 70% at 88% 8%, #4a2a7a 0%, rgba(74, 42, 122, 0) 50%),
-    radial-gradient(140% 100% at 60% 110%, #6b2b6b 0%, rgba(107, 43, 107, 0) 45%),
-    linear-gradient(180deg, #0a0720 0%, #07051a 60%, #050410 100%);
-
-  --header-title-size: clamp(24px, calc(10.667px + 0.833cqi), 29px);
-  --range-size: clamp(13px, calc(6.333px + 0.417cqi), 15.5px);
-  --nav-btn-size: clamp(36px, calc(17.333px + 1.167cqi), 43px);
-  --nav-btn-font: clamp(16px, calc(8px + 0.5cqi), 19px);
-  --today-btn-height: clamp(36px, calc(17.333px + 1.167cqi), 43px);
-  --today-btn-font: clamp(13px, calc(6.333px + 0.417cqi), 15.5px);
-
-  --weekday-pad-y: clamp(11px, calc(5.667px + 0.333cqi), 13px);
-  --weekday-pad-x: clamp(12px, calc(5.333px + 0.417cqi), 14.5px);
-  --weekday-font: clamp(11px, calc(5.667px + 0.333cqi), 13px);
-
-  --gutter-width: clamp(58px, calc(27.333px + 1.917cqi), 69.5px);
-  --px-per-hour: clamp(38px, calc(18px + 1.25cqi), 45.5px);
-  --pad-top: clamp(16px, calc(8px + 0.5cqi), 19px);
-  --hour-font: clamp(10.5px, calc(5.167px + 0.333cqi), 12.5px);
-  --day-pill-font: clamp(11.5px, calc(4.833px + 0.417cqi), 14px);
-
-  --event-pad-y: clamp(5px, calc(2.333px + 0.167cqi), 6px);
-  --event-pad-x: clamp(7px, calc(3px + 0.25cqi), 8.5px);
-  --event-raidname-font: clamp(11px, calc(5.667px + 0.333cqi), 13px);
-  --event-meta-font: clamp(10px, calc(4.667px + 0.333cqi), 12px);
-  --mark-size: clamp(30px, calc(14px + 1cqi), 36px);
-
-  --dialog-width: clamp(352px, calc(164px + 11.75cqi), 422.5px);
-  --dialog-title-size: clamp(16px, calc(8px + 0.5cqi), 19px);
-  --dialog-meta-size: clamp(12px, calc(5.333px + 0.417cqi), 14.5px);
-  --dialog-badge-size: clamp(28px, calc(13.333px + 0.917cqi), 33.5px);
-  --dialog-char-size: clamp(13px, calc(6.333px + 0.417cqi), 15.5px);
-  --dialog-status-size: clamp(12px, calc(5.333px + 0.417cqi), 14.5px);
-  --dialog-close-size: clamp(28px, calc(13.333px + 0.917cqi), 33.5px);
-}
-
-.root::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.5;
-  background-image:
-    radial-gradient(1px 1px at 12% 22%, #fff, transparent),
-    radial-gradient(1px 1px at 34% 8%, #cfc9ff, transparent),
-    radial-gradient(1.5px 1.5px at 58% 30%, #fff, transparent),
-    radial-gradient(1px 1px at 76% 12%, #bfe0ff, transparent),
-    radial-gradient(1px 1px at 88% 44%, #fff, transparent),
-    radial-gradient(1px 1px at 22% 62%, #e6dcff, transparent),
-    radial-gradient(1.2px 1.2px at 46% 80%, #fff, transparent),
-    radial-gradient(1px 1px at 68% 68%, #cfc9ff, transparent),
-    radial-gradient(1px 1px at 92% 86%, #fff, transparent),
-    radial-gradient(1px 1px at 6% 90%, #bfe0ff, transparent);
-}
-
 .content {
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-  max-width: clamp(1600px, 100cqi, 2200px);
-  width: 100%;
-  margin: 0 auto;
+  gap: var(--zp-space-6);
 }
 
 .signOutButton {
   align-self: flex-start;
   background: transparent;
   border: none;
-  color: rgba(214, 208, 255, 0.5);
-  font-size: 12px;
+  color: var(--zp-text-4);
+  font: var(--zp-text-sm);
   cursor: pointer;
   padding: 0;
 }
 
+.signOutButton:hover {
+  color: var(--zp-text-3);
+}
+
+.caption {
+  font: var(--zp-text-sm);
+  color: var(--zp-text-3);
+}
+
 .header {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: var(--space-4);
+  gap: var(--zp-space-5);
 }
 
 .titleRow {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  --logo-height: calc(var(--header-title-size) * 2.6);
+  gap: 20px;
+  --logo-height: 95px;
 }
 
 .logoLink {
-  display: inline-flex;
+  display: block;
+  flex-shrink: 0;
   line-height: 0;
 }
 
 .logo {
   display: block;
   height: var(--logo-height);
-  width: var(--logo-height);
+  width: auto;
 }
 
 /*
- * Within the logo's 100x100 viewBox, the "Z" glyph itself only spans
- * y 18.8-75.2 (the rest is transparent margin in the source asset, which
- * we don't touch). Position the title/date text by those same fractions
- * of --logo-height so their top/bottom line up with the glyph's top/bottom
- * rather than the logo's full square bounds.
+ * Within the logo's 100x100 viewBox the "Z" glyph spans y 18.8-75.2 (the
+ * rest is transparent margin), so title/range are positioned by those same
+ * fractions of --logo-height rather than the logo's full square bounds —
+ * their top/bottom line up with the glyph's, not the asset's.
  */
 .titleBlock {
   position: relative;
@@ -144,8 +77,9 @@
   top: calc(var(--logo-height) * 0.188);
   margin: 0;
   white-space: nowrap;
-  font: 500 var(--header-title-size) / 0.9 var(--font-heading);
-  background: linear-gradient(92deg, #ffffff 0%, #c9b8ff 45%, #f7a8e8 100%);
+  font: var(--zp-text-h1);
+  letter-spacing: var(--zp-tracking-tight);
+  background-image: var(--zp-gradient-text);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -156,90 +90,48 @@
   bottom: calc(var(--logo-height) * 0.248);
   margin: 0;
   white-space: nowrap;
-  font: 400 var(--range-size) / 0.9 var(--font-body);
-  color: rgba(214, 208, 255, 0.6);
+  font: var(--zp-text-data);
+  color: var(--zp-text-3);
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--zp-space-2);
 }
 
 .navGroup {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--zp-space-2);
 }
 
-.navButton {
-  width: var(--nav-btn-size);
-  height: var(--nav-btn-size);
-  border-radius: 10px;
-  border: 1px solid rgba(145, 132, 217, 0.3);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02));
-  backdrop-filter: blur(10px);
-  color: #eae8ff;
-  font-size: var(--nav-btn-font);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: 0.18s;
-}
-
-.navButton:hover {
-  border-color: rgba(199, 184, 255, 0.7);
-  background: linear-gradient(180deg, rgba(145, 132, 217, 0.28), rgba(145, 132, 217, 0.08));
-}
-
-.todayButton {
-  height: var(--today-btn-height);
-  padding: 0 var(--space-4);
-  border-radius: 10px;
-  border: 1px solid rgba(199, 184, 255, 0.55);
-  background: linear-gradient(135deg, rgba(145, 132, 217, 0.3), rgba(247, 168, 232, 0.14));
-  backdrop-filter: blur(10px);
-  color: #f3efff;
-  font: 500 var(--today-btn-font) var(--font-body);
-  cursor: pointer;
-  box-shadow: 0 0 18px rgba(145, 132, 217, 0.22);
-  transition: 0.18s;
-}
-
-.todayButton:hover {
-  box-shadow: 0 0 26px rgba(145, 132, 217, 0.4);
-}
-
-.panel {
-  border-radius: 16px;
-  overflow: hidden;
-  border: 1px solid rgba(145, 132, 217, 0.22);
-  background: linear-gradient(180deg, rgba(20, 15, 48, 0.62), rgba(10, 8, 26, 0.5));
-  backdrop-filter: blur(18px);
-  box-shadow: 0 24px 70px rgba(4, 2, 14, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+/* ── Grid ─────────────────────────────────────────────────────── */
+.gridColumns {
+  --gutter-width: 62px;
+  --px-per-hour: 30px;
+  --pad-top: 16px;
 }
 
 .headerRow {
   display: grid;
   grid-template-columns: var(--gutter-width) repeat(7, minmax(0, 1fr));
-  background: linear-gradient(180deg, rgba(145, 132, 217, 0.14), rgba(145, 132, 217, 0.03));
+  background: var(--zp-surface-2);
+  border-bottom: 1px solid var(--zp-line);
 }
 
 .gutterCorner {
   box-sizing: border-box;
-  border-right: 1px solid rgba(145, 132, 217, 0.14);
-  border-bottom: 1px solid rgba(145, 132, 217, 0.18);
+  border-right: 1px solid var(--zp-line);
 }
 
 .weekdayCell {
   box-sizing: border-box;
-  padding: var(--weekday-pad-y) var(--weekday-pad-x);
-  font: 500 var(--weekday-font) var(--font-body);
-  letter-spacing: 0.08em;
+  padding: 10px 12px;
+  font: var(--zp-text-micro);
+  letter-spacing: var(--zp-tracking-micro);
   text-transform: uppercase;
-  color: rgba(214, 208, 255, 0.66);
-  border-right: 1px solid rgba(145, 132, 217, 0.14);
-  border-bottom: 1px solid rgba(145, 132, 217, 0.18);
+  color: var(--zp-text-3);
+  border-right: 1px solid var(--zp-line);
 }
 
 .weekRow {
@@ -251,18 +143,18 @@
   position: relative;
   box-sizing: border-box;
   height: calc(var(--pad-top) + var(--row-height-hours) * var(--px-per-hour) + 10px);
-  border-right: 1px solid rgba(145, 132, 217, 0.14);
-  border-bottom: 1px solid rgba(145, 132, 217, 0.12);
-  background: linear-gradient(180deg, rgba(12, 9, 32, 0.5), rgba(12, 9, 32, 0.18));
+  border-right: 1px solid var(--zp-line);
+  border-bottom: 1px solid var(--zp-line);
+  background: var(--zp-surface-1);
 }
 
 .hourLabel {
   position: absolute;
-  right: 8px;
+  right: 10px;
   top: calc(var(--pad-top) + var(--offset-hours) * var(--px-per-hour));
   transform: translateY(-50%);
-  font: 400 var(--hour-font) var(--font-body);
-  color: rgba(206, 199, 255, 0.45);
+  font: var(--zp-text-micro);
+  color: var(--zp-text-4);
   white-space: nowrap;
 }
 
@@ -271,15 +163,15 @@
   box-sizing: border-box;
   height: calc(var(--pad-top) + var(--row-height-hours) * var(--px-per-hour) + 10px);
   overflow: hidden;
-  border-right: 1px solid rgba(145, 132, 217, 0.12);
-  border-bottom: 1px solid rgba(145, 132, 217, 0.12);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.008));
-  transition: background 0.2s;
+  background: transparent;
+  border-right: 1px solid var(--zp-line);
+  border-bottom: 1px solid var(--zp-line);
+  transition: background var(--zp-dur) var(--zp-ease);
 }
 
 .dayCellHighlighted {
-  background: linear-gradient(180deg, rgba(145, 132, 217, 0.1), rgba(145, 132, 217, 0.025));
-  box-shadow: inset 0 1px 0 0 rgba(199, 184, 255, 0.24), inset 0 0 34px rgba(145, 132, 217, 0.06);
+  background: var(--zp-surface-1);
+  box-shadow: inset 0 1px 0 0 var(--zp-line-accent);
 }
 
 .hourLine {
@@ -288,22 +180,25 @@
   right: 0;
   top: calc(var(--pad-top) + var(--offset-hours) * var(--px-per-hour));
   height: 1px;
-  background: linear-gradient(90deg, rgba(145, 132, 217, 0.03), rgba(145, 132, 217, 0.14), rgba(145, 132, 217, 0.03));
+  background: var(--zp-rule-fade);
 }
 
 .dayNumber {
   position: absolute;
-  top: 3px;
-  left: 5px;
-  padding: 1px 5px;
-  border-radius: 6px;
-  font: 500 var(--day-pill-font) var(--font-body);
-  color: rgba(206, 199, 255, 0.55);
+  top: 5px;
+  left: 8px;
+  font: var(--zp-text-micro);
+  letter-spacing: 0.06em;
+  color: var(--zp-text-4);
   z-index: 1;
 }
 
 .dayNumberToday {
-  color: #ffe7fa;
-  background: linear-gradient(135deg, rgba(247, 168, 232, 0.34), rgba(201, 184, 255, 0.18));
-  box-shadow: 0 0 12px rgba(247, 168, 232, 0.35), inset 0 0 0 1px rgba(247, 168, 232, 0.5);
+  color: var(--zp-accent-300);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dayCell {
+    transition: none;
+  }
 }

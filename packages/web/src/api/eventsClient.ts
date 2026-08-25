@@ -1,4 +1,10 @@
-import type { CreateCustomEventInput, EventsResponse, RaidEvent } from '@raidschedule/shared';
+import type {
+  CreateCustomEventInput,
+  EventsResponse,
+  RaidEvent,
+  RaidHelperEventOverrideInput,
+  UpdateCustomEventInput,
+} from '@raidschedule/shared';
 
 export async function fetchEvents(signal?: AbortSignal): Promise<EventsResponse> {
   const res = await fetch('/api/events', { signal });
@@ -21,6 +27,19 @@ export async function createCustomEvent(input: CreateCustomEventInput, signal?: 
   return (await res.json()) as RaidEvent;
 }
 
+export async function updateCustomEvent(id: string, patch: UpdateCustomEventInput, signal?: AbortSignal): Promise<RaidEvent> {
+  const res = await fetch(`/api/events/${encodeURIComponent(id)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(patch),
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to save event (${res.status})`);
+  }
+  return (await res.json()) as RaidEvent;
+}
+
 export async function deleteCustomEvent(id: string, signal?: AbortSignal): Promise<void> {
   const res = await fetch(`/api/events/${encodeURIComponent(id)}`, { method: 'DELETE', signal });
   if (!res.ok) {
@@ -28,50 +47,25 @@ export async function deleteCustomEvent(id: string, signal?: AbortSignal): Promi
   }
 }
 
-export async function confirmCustomEvent(id: string, signal?: AbortSignal): Promise<RaidEvent> {
-  const res = await fetch(`/api/events/${encodeURIComponent(id)}`, {
+/**
+ * `eventId` is the full `RaidEvent.id` (`raid-helper:{raidHelperEventId}:{signUpId}`)
+ * of a Raid-Helper-sourced event. Returns the patch actually applied — the
+ * server doesn't reconstruct a full `RaidEvent` (that would mean re-fetching
+ * raid-helper.xyz), so the caller merges this onto its own local copy.
+ */
+export async function updateRaidHelperEventOverride(
+  eventId: string,
+  patch: RaidHelperEventOverrideInput,
+  signal?: AbortSignal,
+): Promise<RaidHelperEventOverrideInput> {
+  const res = await fetch(`/api/raid-helper-events/${encodeURIComponent(eventId)}/override`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: 'confirmed' }),
+    body: JSON.stringify(patch),
     signal,
   });
   if (!res.ok) {
-    throw new Error(`Failed to confirm event (${res.status})`);
+    throw new Error(`Failed to save event (${res.status})`);
   }
-  return (await res.json()) as RaidEvent;
-}
-
-export async function setCustomEventFaction(id: string, isHorde: boolean, signal?: AbortSignal): Promise<RaidEvent> {
-  const res = await fetch(`/api/events/${encodeURIComponent(id)}/horde`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ isHorde }),
-    signal,
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to update Horde tag (${res.status})`);
-  }
-  return (await res.json()) as RaidEvent;
-}
-
-export interface SetHordeTagResult {
-  raidHelperEventId: string;
-  isHorde: boolean;
-}
-
-export async function setHordeTag(
-  raidHelperEventId: string,
-  isHorde: boolean,
-  signal?: AbortSignal,
-): Promise<SetHordeTagResult> {
-  const res = await fetch(`/api/raid-helper-events/${encodeURIComponent(raidHelperEventId)}/horde`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ isHorde }),
-    signal,
-  });
-  if (!res.ok) {
-    throw new Error(`Failed to update Horde tag (${res.status})`);
-  }
-  return (await res.json()) as SetHordeTagResult;
+  return (await res.json()) as RaidHelperEventOverrideInput;
 }

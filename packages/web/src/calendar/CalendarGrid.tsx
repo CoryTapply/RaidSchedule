@@ -1,4 +1,5 @@
 import type { RaidEvent } from '@raidschedule/shared';
+import { Panel } from '../design-system/zerpy/components/index.js';
 import type { CalendarDay } from './useCalendarState.js';
 import { WeekRow } from './WeekRow.js';
 import { weekdayLabels } from './format.js';
@@ -7,6 +8,7 @@ import styles from '../styles/calendar.module.css';
 export interface CalendarGridProps {
   days: CalendarDay[];
   onSelectEvent: (event: RaidEvent) => void;
+  onEditEvent: (event: RaidEvent, e: { clientX: number; clientY: number }) => void;
   onEnterDay: (lockoutWeekKey: string) => void;
   onLeaveDay: () => void;
   onOpenComposer: (day: CalendarDay, e: { clientX: number; clientY: number }) => void;
@@ -18,29 +20,32 @@ function chunkIntoWeeks(days: CalendarDay[]): CalendarDay[][] {
   return weeks;
 }
 
-export function CalendarGrid({ days, onSelectEvent, onEnterDay, onLeaveDay, onOpenComposer }: CalendarGridProps) {
+export function CalendarGrid({ days, onSelectEvent, onEditEvent, onEnterDay, onLeaveDay, onOpenComposer }: CalendarGridProps) {
   const weeks = chunkIntoWeeks(days);
 
   return (
-    <div className={styles.panel}>
-      <div className={styles.headerRow}>
-        <div className={styles.gutterCorner} />
-        {weekdayLabels().map((label) => (
-          <div key={label} className={styles.weekdayCell}>
-            {label}
-          </div>
+    <Panel>
+      <div className={styles.gridColumns}>
+        <div className={styles.headerRow}>
+          <div className={styles.gutterCorner} />
+          {weekdayLabels().map((label) => (
+            <div key={label} className={styles.weekdayCell}>
+              {label}
+            </div>
+          ))}
+        </div>
+        {weeks.map((weekDays) => (
+          <WeekRow
+            key={weekDays[0]!.key}
+            days={weekDays}
+            onSelectEvent={onSelectEvent}
+            onEditEvent={onEditEvent}
+            onEnterDay={onEnterDay}
+            onLeaveDay={onLeaveDay}
+            onOpenComposer={onOpenComposer}
+          />
         ))}
       </div>
-      {weeks.map((weekDays) => (
-        <WeekRow
-          key={weekDays[0]!.key}
-          days={weekDays}
-          onSelectEvent={onSelectEvent}
-          onEnterDay={onEnterDay}
-          onLeaveDay={onLeaveDay}
-          onOpenComposer={onOpenComposer}
-        />
-      ))}
-    </div>
+    </Panel>
   );
 }

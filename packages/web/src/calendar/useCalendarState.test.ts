@@ -1,28 +1,20 @@
 import { act, fireEvent, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { dateKey, startOfWeekSunday, type RaidEvent } from '@raidschedule/shared';
-import {
-  confirmCustomEvent,
-  createCustomEvent,
-  deleteCustomEvent,
-  setCustomEventFaction,
-  setHordeTag,
-} from '../api/eventsClient.js';
+import { createCustomEvent, deleteCustomEvent, updateCustomEvent, updateRaidHelperEventOverride } from '../api/eventsClient.js';
 import { useCalendarState } from './useCalendarState.js';
 
 vi.mock('../api/eventsClient.js', () => ({
   createCustomEvent: vi.fn(),
+  updateCustomEvent: vi.fn(),
   deleteCustomEvent: vi.fn(),
-  confirmCustomEvent: vi.fn(),
-  setHordeTag: vi.fn(),
-  setCustomEventFaction: vi.fn(),
+  updateRaidHelperEventOverride: vi.fn(),
 }));
 
 const mockCreateCustomEvent = vi.mocked(createCustomEvent);
+const mockUpdateCustomEvent = vi.mocked(updateCustomEvent);
 const mockDeleteCustomEvent = vi.mocked(deleteCustomEvent);
-const mockConfirmCustomEvent = vi.mocked(confirmCustomEvent);
-const mockSetHordeTag = vi.mocked(setHordeTag);
-const mockSetCustomEventFaction = vi.mocked(setCustomEventFaction);
+const mockUpdateRaidHelperEventOverride = vi.mocked(updateRaidHelperEventOverride);
 
 // Wednesday, August 19, 2026 — a known "today" so lockout-week fallback is deterministic.
 const TODAY = new Date(2026, 7, 19);
@@ -37,32 +29,21 @@ beforeEach(() => {
     source: 'custom',
     ...input,
   }) as RaidEvent);
-  mockDeleteCustomEvent.mockReset();
-  mockDeleteCustomEvent.mockResolvedValue(undefined);
-  mockConfirmCustomEvent.mockReset();
-  mockConfirmCustomEvent.mockImplementation(async (id) => ({
+  mockUpdateCustomEvent.mockReset();
+  mockUpdateCustomEvent.mockImplementation(async (id, patch) => ({
     id,
     source: 'custom',
     raidName: 'Test Raid',
     startsAt: new Date().toISOString(),
     status: 'confirmed',
     character: { name: 'Thrashclaw', className: 'Druid' },
+    isHorde: false,
+    ...patch,
   }) as RaidEvent);
-  mockSetHordeTag.mockReset();
-  mockSetHordeTag.mockImplementation(async (raidHelperEventId, isHorde) => ({ raidHelperEventId, isHorde }));
-  mockSetCustomEventFaction.mockReset();
-  mockSetCustomEventFaction.mockImplementation(
-    async (id, isHorde) =>
-      ({
-        id,
-        source: 'custom',
-        raidName: 'Test Raid',
-        startsAt: new Date().toISOString(),
-        status: 'confirmed',
-        character: { name: 'Thrashclaw', className: 'Druid' },
-        isHorde,
-      }) as RaidEvent,
-  );
+  mockDeleteCustomEvent.mockReset();
+  mockDeleteCustomEvent.mockResolvedValue(undefined);
+  mockUpdateRaidHelperEventOverride.mockReset();
+  mockUpdateRaidHelperEventOverride.mockImplementation(async (_eventId, patch) => patch);
 });
 
 afterEach(() => {
@@ -151,7 +132,7 @@ describe('useCalendarState', () => {
     expect(day?.events[0]?.raidName).toBe('Test Raid');
   });
 
-  describe('composer', () => {
+  describe('composer: new event', () => {
     it('opens with clamped position and clears any open detail dialog', () => {
       const { result } = renderHook(() => useCalendarState([]));
       const day = result.current.days[3]!;
@@ -167,7 +148,18 @@ describe('useCalendarState', () => {
       expect(result.current.selectedEvent).not.toBeNull();
 
       act(() => result.current.openComposer(day, { clientX: 100, clientY: 100 }));
-      expect(result.current.composer).toMatchObject({ key: day.key, x: 100, y: 100, title: '', start: '20:00', end: '23:00', character: '', cls: 'Druid', status: 'confirmed' });
+      expect(result.current.composer).toMatchObject({
+        mode: 'create',
+        key: day.key,
+        x: 100,
+        y: 100,
+        title: '',
+        start: '20:00',
+        end: '23:00',
+        character: '',
+        cls: 'Druid',
+        status: 'confirmed',
+      });
       expect(result.current.selectedEvent).toBeNull();
     });
 
@@ -176,12 +168,12 @@ describe('useCalendarState', () => {
       const day = result.current.days[0]!;
 
       act(() => result.current.openComposer(day, { clientX: window.innerWidth, clientY: window.innerHeight }));
-      expect(result.current.composer!.x).toBe(window.innerWidth - 320);
-      expect(result.current.composer!.y).toBe(window.innerHeight - 500);
+      expect(result.current.composer!.x).toBe(window.innerWidth - 348);
+      expect(result.current.composer!.y).toBe(window.innerHeight - 528);
 
       act(() => result.current.openComposer(day, { clientX: -100, clientY: -100 }));
       expect(result.current.composer!.x).toBe(8);
-      expect(result.current.composer!.y).toBe(8);
+      expect(result.current.composer!.y).toBe(12);
     });
 
     it('updateComposer patches fields, closeComposer clears it', () => {
@@ -246,7 +238,7 @@ describe('useCalendarState', () => {
       });
     });
 
-    it('saveComposer sends the pending status when Tentative is selected', async () => {
+    it('saveComposer sends the pending status when Signed up is selected', async () => {
       const { result } = renderHook(() => useCalendarState([]));
       const day = result.current.days[3]!;
 
@@ -319,158 +311,160 @@ describe('useCalendarState', () => {
     });
   });
 
-  describe('delete', () => {
+  describe('openEditor', () => {
+    it('prefills the composer from a custom event, in edit-custom mode', () => {
+      const customEvent: RaidEvent = {
+        id: 'custom:evt-1',
+        source: 'custom',
+        raidName: 'Test Raid',
+        startsAt: '2026-08-18T20:00:00.000Z',
+        endsAt: '2026-08-18T23:00:00.000Z',
+        status: 'pending',
+        character: { name: 'Thrashclaw', className: 'Druid' },
+        isHorde: true,
+      };
+      const { result } = renderHook(() => useCalendarState([customEvent]));
+
+      act(() => result.current.openEditor(customEvent, { clientX: 50, clientY: 50 }));
+      expect(result.current.composer).toMatchObject({
+        mode: 'edit-custom',
+        id: 'custom:evt-1',
+        title: 'Test Raid',
+        character: 'Thrashclaw',
+        cls: 'Druid',
+        status: 'pending',
+        isHorde: true,
+      });
+    });
+
+    it('prefills the composer from a raid-helper event, in edit-raid-helper mode, with a read-only time label', () => {
+      const raidHelperEvent: RaidEvent = {
+        id: 'raid-helper:evt1:1',
+        raidHelperEventId: 'evt1',
+        source: 'raid-helper',
+        raidName: 'Nerub-ar Palace',
+        startsAt: '2026-08-18T20:00:00.000Z',
+        endsAt: '2026-08-18T23:00:00.000Z',
+        status: 'confirmed',
+        character: { name: 'Thrashclaw', className: 'Druid' },
+        isHorde: false,
+      };
+      const { result } = renderHook(() => useCalendarState([raidHelperEvent]));
+
+      act(() => result.current.openEditor(raidHelperEvent, { clientX: 50, clientY: 50 }));
+      expect(result.current.composer).toMatchObject({ mode: 'edit-raid-helper', id: 'raid-helper:evt1:1' });
+      expect(result.current.composer!.timeLabel.length).toBeGreaterThan(0);
+    });
+
+    it('clears any open detail dialog', () => {
+      const customEvent: RaidEvent = {
+        id: 'custom:evt-1',
+        source: 'custom',
+        raidName: 'Test Raid',
+        startsAt: new Date().toISOString(),
+        status: 'confirmed',
+        character: { name: 'Thrashclaw', className: 'Druid' },
+      };
+      const { result } = renderHook(() => useCalendarState([customEvent]));
+
+      act(() => result.current.selectEvent(customEvent));
+      act(() => result.current.openEditor(customEvent, { clientX: 50, clientY: 50 }));
+      expect(result.current.selectedEvent).toBeNull();
+    });
+  });
+
+  describe('composer: edit-custom', () => {
     const customEvent: RaidEvent = {
       id: 'custom:evt-1',
       source: 'custom',
       raidName: 'Test Raid',
-      startsAt: new Date().toISOString(),
-      status: 'confirmed',
-      character: { name: 'Thrashclaw', className: 'Druid' },
-    };
-
-    it('deletes the selected custom event and closes the dialog', async () => {
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-      const day = result.current.days.find((d) => d.events.some((e) => e.id === customEvent.id))!;
-      expect(day.events).toHaveLength(1);
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.deleteSelectedEvent());
-
-      expect(mockDeleteCustomEvent).toHaveBeenCalledWith(customEvent.id);
-      expect(result.current.selectedEvent).toBeNull();
-    });
-
-    it('removes a deleted event from the calendar even when it came from the initial events prop, without a reload', async () => {
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-      const dayKey = result.current.days.find((d) => d.events.some((e) => e.id === customEvent.id))!.key;
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.deleteSelectedEvent());
-
-      const day = result.current.days.find((d) => d.key === dayKey)!;
-      expect(day.events).toHaveLength(0);
-    });
-
-    it('is a no-op for a raid-helper event', async () => {
-      const raidHelperEvent: RaidEvent = { ...customEvent, id: 'raid-helper:1:1', source: 'raid-helper' };
-      const { result } = renderHook(() => useCalendarState([]));
-
-      act(() => result.current.selectEvent(raidHelperEvent));
-      await act(async () => result.current.deleteSelectedEvent());
-
-      expect(mockDeleteCustomEvent).not.toHaveBeenCalled();
-      expect(result.current.selectedEvent).not.toBeNull();
-    });
-
-    it('surfaces an error and keeps the dialog open when the request fails', async () => {
-      mockDeleteCustomEvent.mockRejectedValueOnce(new Error('Failed to delete event (500)'));
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.deleteSelectedEvent());
-
-      expect(result.current.selectedEvent).not.toBeNull();
-      expect(result.current.deletingEvent).toBe(false);
-      expect(result.current.deleteError).toBe('Failed to delete event (500)');
-    });
-
-    it('clears a stale delete error when a different event is selected', async () => {
-      mockDeleteCustomEvent.mockRejectedValueOnce(new Error('Failed to delete event (500)'));
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.deleteSelectedEvent());
-      expect(result.current.deleteError).not.toBeNull();
-
-      act(() => result.current.selectEvent(customEvent));
-      expect(result.current.deleteError).toBeNull();
-    });
-  });
-
-  describe('confirm', () => {
-    const pendingCustomEvent: RaidEvent = {
-      id: 'custom:evt-1',
-      source: 'custom',
-      raidName: 'Test Raid',
-      startsAt: new Date().toISOString(),
+      startsAt: '2026-08-18T20:00:00.000Z',
+      endsAt: '2026-08-18T23:00:00.000Z',
       status: 'pending',
       character: { name: 'Thrashclaw', className: 'Druid' },
+      isHorde: false,
     };
 
-    it('confirms the selected pending custom event and keeps the dialog open with the updated status', async () => {
-      const { result } = renderHook(() => useCalendarState([pendingCustomEvent]));
+    it('saves the full patch and reflects it on the calendar, even though the event came from the initial events prop', async () => {
+      const { result } = renderHook(() => useCalendarState([customEvent]));
 
-      act(() => result.current.selectEvent(pendingCustomEvent));
-      await act(async () => result.current.confirmSelectedEvent());
+      act(() => result.current.openEditor(customEvent, { clientX: 10, clientY: 10 }));
+      act(() => result.current.updateComposer({ title: 'Renamed Raid', character: 'Windrunner', cls: 'Hunter', isHorde: true }));
+      await act(async () => result.current.saveComposer());
 
-      expect(mockConfirmCustomEvent).toHaveBeenCalledWith(pendingCustomEvent.id);
-      expect(result.current.selectedEvent).toMatchObject({ id: pendingCustomEvent.id, status: 'confirmed' });
+      expect(mockUpdateCustomEvent).toHaveBeenCalledWith(
+        'custom:evt-1',
+        expect.objectContaining({
+          raidName: 'Renamed Raid',
+          character: { name: 'Windrunner', className: 'Hunter' },
+          isHorde: true,
+        }),
+      );
+      expect(result.current.composer).toBeNull();
+
+      const events = result.current.days.flatMap((d) => d.events);
+      const updated = events.find((e) => e.id === 'custom:evt-1');
+      expect(updated).toMatchObject({ raidName: 'Renamed Raid', character: { name: 'Windrunner', className: 'Hunter' } });
+      // No duplicate: the edited copy replaces the original from the events prop, doesn't sit alongside it.
+      expect(events.filter((e) => e.id === 'custom:evt-1')).toHaveLength(1);
     });
 
-    it('updates the event on the calendar even when it came from the initial events prop, without a reload', async () => {
-      const { result } = renderHook(() => useCalendarState([pendingCustomEvent]));
-      const dayKey = result.current.days.find((d) => d.events.some((e) => e.id === pendingCustomEvent.id))!.key;
+    it('surfaces an error and keeps the composer open when the request fails', async () => {
+      mockUpdateCustomEvent.mockRejectedValueOnce(new Error('Failed to save event (500)'));
+      const { result } = renderHook(() => useCalendarState([customEvent]));
 
-      act(() => result.current.selectEvent(pendingCustomEvent));
-      await act(async () => result.current.confirmSelectedEvent());
+      act(() => result.current.openEditor(customEvent, { clientX: 10, clientY: 10 }));
+      await act(async () => result.current.saveComposer());
 
-      const day = result.current.days.find((d) => d.key === dayKey)!;
-      expect(day.events[0]).toMatchObject({ status: 'confirmed' });
+      expect(result.current.composer).not.toBeNull();
+      expect(result.current.composer!.saving).toBe(false);
+      expect(result.current.composer!.saveError).toBe('Failed to save event (500)');
     });
 
-    it('is a no-op for an already-confirmed custom event', async () => {
-      const confirmedEvent: RaidEvent = { ...pendingCustomEvent, status: 'confirmed' };
-      const { result } = renderHook(() => useCalendarState([confirmedEvent]));
+    it('deleteComposerEvent deletes the event and closes the composer', async () => {
+      const { result } = renderHook(() => useCalendarState([customEvent]));
 
-      act(() => result.current.selectEvent(confirmedEvent));
-      await act(async () => result.current.confirmSelectedEvent());
+      act(() => result.current.openEditor(customEvent, { clientX: 10, clientY: 10 }));
+      await act(async () => result.current.deleteComposerEvent());
 
-      expect(mockConfirmCustomEvent).not.toHaveBeenCalled();
+      expect(mockDeleteCustomEvent).toHaveBeenCalledWith('custom:evt-1');
+      expect(result.current.composer).toBeNull();
+      const events = result.current.days.flatMap((d) => d.events);
+      expect(events.find((e) => e.id === 'custom:evt-1')).toBeUndefined();
     });
 
-    it('is a no-op for a raid-helper event', async () => {
-      const raidHelperEvent: RaidEvent = { ...pendingCustomEvent, id: 'raid-helper:1:1', source: 'raid-helper' };
+    it('deleteComposerEvent surfaces an error and keeps the composer open when the request fails', async () => {
+      mockDeleteCustomEvent.mockRejectedValueOnce(new Error('Failed to delete event (500)'));
+      const { result } = renderHook(() => useCalendarState([customEvent]));
+
+      act(() => result.current.openEditor(customEvent, { clientX: 10, clientY: 10 }));
+      await act(async () => result.current.deleteComposerEvent());
+
+      expect(result.current.composer).not.toBeNull();
+      expect(result.current.composer!.saving).toBe(false);
+      expect(result.current.composer!.saveError).toBe('Failed to delete event (500)');
+    });
+
+    it('deleteComposerEvent is a no-op outside edit-custom mode', async () => {
       const { result } = renderHook(() => useCalendarState([]));
+      const day = result.current.days[0]!;
+      act(() => result.current.openComposer(day, { clientX: 10, clientY: 10 }));
 
-      act(() => result.current.selectEvent(raidHelperEvent));
-      await act(async () => result.current.confirmSelectedEvent());
+      await act(async () => result.current.deleteComposerEvent());
 
-      expect(mockConfirmCustomEvent).not.toHaveBeenCalled();
-    });
-
-    it('surfaces an error and keeps the dialog open when the request fails', async () => {
-      mockConfirmCustomEvent.mockRejectedValueOnce(new Error('Failed to confirm event (500)'));
-      const { result } = renderHook(() => useCalendarState([pendingCustomEvent]));
-
-      act(() => result.current.selectEvent(pendingCustomEvent));
-      await act(async () => result.current.confirmSelectedEvent());
-
-      expect(result.current.selectedEvent).not.toBeNull();
-      expect(result.current.confirmingEvent).toBe(false);
-      expect(result.current.confirmError).toBe('Failed to confirm event (500)');
-    });
-
-    it('clears a stale confirm error when a different event is selected', async () => {
-      mockConfirmCustomEvent.mockRejectedValueOnce(new Error('Failed to confirm event (500)'));
-      const { result } = renderHook(() => useCalendarState([pendingCustomEvent]));
-
-      act(() => result.current.selectEvent(pendingCustomEvent));
-      await act(async () => result.current.confirmSelectedEvent());
-      expect(result.current.confirmError).not.toBeNull();
-
-      act(() => result.current.selectEvent(pendingCustomEvent));
-      expect(result.current.confirmError).toBeNull();
+      expect(mockDeleteCustomEvent).not.toHaveBeenCalled();
+      expect(result.current.composer).not.toBeNull();
     });
   });
 
-  describe('horde tag', () => {
+  describe('composer: edit-raid-helper', () => {
     const raidHelperEvent: RaidEvent = {
       id: 'raid-helper:evt1:1',
       raidHelperEventId: 'evt1',
       source: 'raid-helper',
       raidName: 'Test Raid',
-      startsAt: new Date().toISOString(),
+      startsAt: '2026-08-18T20:00:00.000Z',
+      endsAt: '2026-08-18T23:00:00.000Z',
       status: 'confirmed',
       character: { name: 'Thrashclaw', className: 'Druid' },
       isHorde: false,
@@ -481,115 +475,48 @@ describe('useCalendarState', () => {
       character: { name: 'Ironhide', className: 'Warrior' },
     };
 
-    it('tags the selected raid-helper event as Horde and applies it to every sign-up on that raid', async () => {
+    it('saves identity fields scoped to the one sign-up, and Horde scoped to the whole raid', async () => {
       const { result } = renderHook(() => useCalendarState([raidHelperEvent, otherSignUpSameRaid]));
 
-      act(() => result.current.selectEvent(raidHelperEvent));
-      await act(async () => result.current.toggleHordeSelectedEvent());
+      act(() => result.current.openEditor(raidHelperEvent, { clientX: 10, clientY: 10 }));
+      act(() => result.current.updateComposer({ title: 'Renamed Raid', character: 'Renamed', cls: 'Mage', status: 'pending', isHorde: true }));
+      await act(async () => result.current.saveComposer());
 
-      expect(mockSetHordeTag).toHaveBeenCalledWith('evt1', true);
-      expect(result.current.selectedEvent).toMatchObject({ id: raidHelperEvent.id, isHorde: true });
-
-      const events = result.current.days.flatMap((d) => d.events);
-      expect(events.find((e) => e.id === raidHelperEvent.id)?.isHorde).toBe(true);
-      expect(events.find((e) => e.id === otherSignUpSameRaid.id)?.isHorde).toBe(true);
-    });
-
-    it('toggles an already-tagged raid back off', async () => {
-      const { result } = renderHook(() => useCalendarState([{ ...raidHelperEvent, isHorde: true }]));
-
-      act(() => result.current.selectEvent({ ...raidHelperEvent, isHorde: true }));
-      await act(async () => result.current.toggleHordeSelectedEvent());
-
-      expect(mockSetHordeTag).toHaveBeenCalledWith('evt1', false);
-      expect(result.current.selectedEvent).toMatchObject({ isHorde: false });
-    });
-
-    it('tags a selected custom event as Horde', async () => {
-      const customEvent: RaidEvent = {
-        id: 'custom:evt-1',
-        source: 'custom',
-        raidName: 'Test Raid',
-        startsAt: new Date().toISOString(),
-        status: 'confirmed',
-        character: { name: 'Thrashclaw', className: 'Druid' },
-        isHorde: false,
-      };
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.toggleHordeSelectedEvent());
-
-      expect(mockSetHordeTag).not.toHaveBeenCalled();
-      expect(mockSetCustomEventFaction).toHaveBeenCalledWith('custom:evt-1', true);
-      expect(result.current.selectedEvent).toMatchObject({ id: customEvent.id, isHorde: true });
+      expect(mockUpdateRaidHelperEventOverride).toHaveBeenCalledWith(
+        'raid-helper:evt1:1',
+        expect.objectContaining({
+          raidName: 'Renamed Raid',
+          character: { name: 'Renamed', className: 'Mage' },
+          status: 'pending',
+          isHorde: true,
+        }),
+      );
+      expect(result.current.composer).toBeNull();
 
       const events = result.current.days.flatMap((d) => d.events);
-      expect(events.find((e) => e.id === customEvent.id)?.isHorde).toBe(true);
+      const edited = events.find((e) => e.id === 'raid-helper:evt1:1')!;
+      expect(edited).toMatchObject({ raidName: 'Renamed Raid', character: { name: 'Renamed', className: 'Mage' }, status: 'pending', isHorde: true });
+      // isHorde applies to every sign-up on the raid; the identity edit does not.
+      const other = events.find((e) => e.id === 'raid-helper:evt1:2')!;
+      expect(other).toMatchObject({ character: { name: 'Ironhide', className: 'Warrior' }, isHorde: true });
     });
 
-    it('toggles an already-tagged custom event back off', async () => {
-      const customEvent: RaidEvent = {
-        id: 'custom:evt-1',
-        source: 'custom',
-        raidName: 'Test Raid',
-        startsAt: new Date().toISOString(),
-        status: 'confirmed',
-        character: { name: 'Thrashclaw', className: 'Druid' },
-        isHorde: true,
-      };
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.toggleHordeSelectedEvent());
-
-      expect(mockSetCustomEventFaction).toHaveBeenCalledWith('custom:evt-1', false);
-      expect(result.current.selectedEvent).toMatchObject({ isHorde: false });
+    it('does not offer a Start/End edit — the schedule stays whatever came from raid-helper', () => {
+      const { result } = renderHook(() => useCalendarState([raidHelperEvent]));
+      act(() => result.current.openEditor(raidHelperEvent, { clientX: 10, clientY: 10 }));
+      expect(result.current.composer!.mode).toBe('edit-raid-helper');
     });
 
-    it('surfaces an error for a custom event when the request fails', async () => {
-      const customEvent: RaidEvent = {
-        id: 'custom:evt-1',
-        source: 'custom',
-        raidName: 'Test Raid',
-        startsAt: new Date().toISOString(),
-        status: 'confirmed',
-        character: { name: 'Thrashclaw', className: 'Druid' },
-        isHorde: false,
-      };
-      mockSetCustomEventFaction.mockRejectedValueOnce(new Error('Failed to update Horde tag (500)'));
-      const { result } = renderHook(() => useCalendarState([customEvent]));
-
-      act(() => result.current.selectEvent(customEvent));
-      await act(async () => result.current.toggleHordeSelectedEvent());
-
-      expect(result.current.selectedEvent).not.toBeNull();
-      expect(result.current.togglingHorde).toBe(false);
-      expect(result.current.hordeError).toBe('Failed to update Horde tag (500)');
-    });
-
-    it('surfaces an error and keeps the dialog open when the request fails', async () => {
-      mockSetHordeTag.mockRejectedValueOnce(new Error('Failed to update Horde tag (500)'));
+    it('surfaces an error and keeps the composer open when the request fails', async () => {
+      mockUpdateRaidHelperEventOverride.mockRejectedValueOnce(new Error('Failed to save event (500)'));
       const { result } = renderHook(() => useCalendarState([raidHelperEvent]));
 
-      act(() => result.current.selectEvent(raidHelperEvent));
-      await act(async () => result.current.toggleHordeSelectedEvent());
+      act(() => result.current.openEditor(raidHelperEvent, { clientX: 10, clientY: 10 }));
+      await act(async () => result.current.saveComposer());
 
-      expect(result.current.selectedEvent).not.toBeNull();
-      expect(result.current.togglingHorde).toBe(false);
-      expect(result.current.hordeError).toBe('Failed to update Horde tag (500)');
-    });
-
-    it('clears a stale horde-tag error when a different event is selected', async () => {
-      mockSetHordeTag.mockRejectedValueOnce(new Error('Failed to update Horde tag (500)'));
-      const { result } = renderHook(() => useCalendarState([raidHelperEvent]));
-
-      act(() => result.current.selectEvent(raidHelperEvent));
-      await act(async () => result.current.toggleHordeSelectedEvent());
-      expect(result.current.hordeError).not.toBeNull();
-
-      act(() => result.current.selectEvent(raidHelperEvent));
-      expect(result.current.hordeError).toBeNull();
+      expect(result.current.composer).not.toBeNull();
+      expect(result.current.composer!.saving).toBe(false);
+      expect(result.current.composer!.saveError).toBe('Failed to save event (500)');
     });
   });
 });
