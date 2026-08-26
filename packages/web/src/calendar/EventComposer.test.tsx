@@ -135,7 +135,7 @@ describe('EventComposer', () => {
 
   it('calls onChange when the title field is edited', async () => {
     const { onChange } = renderComposer();
-    await userEvent.type(screen.getByPlaceholderText('Nerub-ar Palace'), 'X');
+    await userEvent.type(screen.getByPlaceholderText('Black Temple'), 'X');
     expect(onChange).toHaveBeenCalledWith({ title: 'X' });
   });
 
@@ -153,7 +153,7 @@ describe('EventComposer', () => {
 
   it('calls onSave when Enter is pressed in the title field with a title present', async () => {
     const { onSave } = renderComposer({ title: 'Nerub-ar Palace' });
-    screen.getByPlaceholderText('Nerub-ar Palace').focus();
+    screen.getByPlaceholderText('Black Temple').focus();
     await userEvent.keyboard('{Enter}');
     expect(onSave).toHaveBeenCalledTimes(1);
   });
@@ -167,7 +167,7 @@ describe('EventComposer', () => {
 
   it('does not call onSave on Enter when the title is empty', async () => {
     const { onSave } = renderComposer({ title: '' });
-    screen.getByPlaceholderText('Nerub-ar Palace').focus();
+    screen.getByPlaceholderText('Black Temple').focus();
     await userEvent.keyboard('{Enter}');
     expect(onSave).not.toHaveBeenCalled();
   });

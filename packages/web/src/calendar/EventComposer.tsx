@@ -100,7 +100,7 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
           <Field label="Title">
             <Input
               aria-label="Title"
-              placeholder="Nerub-ar Palace"
+              placeholder="Black Temple"
               value={composer.title}
               onChange={(e) => onChange({ title: e.target.value })}
               autoFocus
