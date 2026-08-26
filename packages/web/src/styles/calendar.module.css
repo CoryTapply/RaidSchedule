@@ -109,7 +109,7 @@
 .gridColumns {
   --gutter-width: 62px;
   --px-per-hour: 30px;
-  --pad-top: 16px;
+  --pad-top: 22px;
 }
 
 .headerRow {
