@@ -1,12 +1,13 @@
 import type { RaidEvent } from '@raidschedule/shared';
 import { Panel } from '../design-system/zerpy/components/index.js';
-import type { CalendarDay } from './useCalendarState.js';
+import type { CalendarDay, CalendarViewMode } from './useCalendarState.js';
 import { WeekRow } from './WeekRow.js';
 import { weekdayLabels } from './format.js';
 import styles from '../styles/calendar.module.css';
 
 export interface CalendarGridProps {
   days: CalendarDay[];
+  viewMode: CalendarViewMode;
   onSelectEvent: (event: RaidEvent) => void;
   onEditEvent: (event: RaidEvent, e: { clientX: number; clientY: number }) => void;
   onEnterDay: (lockoutWeekKey: string) => void;
@@ -20,7 +21,7 @@ function chunkIntoWeeks(days: CalendarDay[]): CalendarDay[][] {
   return weeks;
 }
 
-export function CalendarGrid({ days, onSelectEvent, onEditEvent, onEnterDay, onLeaveDay, onOpenComposer }: CalendarGridProps) {
+export function CalendarGrid({ days, viewMode, onSelectEvent, onEditEvent, onEnterDay, onLeaveDay, onOpenComposer }: CalendarGridProps) {
   const weeks = chunkIntoWeeks(days);
 
   return (
@@ -28,7 +29,7 @@ export function CalendarGrid({ days, onSelectEvent, onEditEvent, onEnterDay, onL
       <div className={styles.gridColumns}>
         <div className={styles.headerRow}>
           <div className={styles.gutterCorner} />
-          {weekdayLabels().map((label) => (
+          {weekdayLabels(viewMode).map((label) => (
             <div key={label} className={styles.weekdayCell}>
               {label}
             </div>

@@ -1,6 +1,6 @@
 import { act, fireEvent, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { dateKey, startOfWeekSunday, type RaidEvent } from '@raidschedule/shared';
+import { dateKey, lockoutStart, startOfWeekSunday, type RaidEvent } from '@raidschedule/shared';
 import { createCustomEvent, deleteCustomEvent, updateCustomEvent, updateRaidHelperEventOverride } from '../api/eventsClient.js';
 import { useCalendarState } from './useCalendarState.js';
 
@@ -51,9 +51,10 @@ afterEach(() => {
 });
 
 describe('useCalendarState', () => {
-  it('starts anchored to the Sunday of the current week', () => {
+  it('starts anchored to the Tuesday of the current lockout week (Lockout is the default view)', () => {
     const { result } = renderHook(() => useCalendarState([]));
-    expect(result.current.anchor.getTime()).toBe(startOfWeekSunday(TODAY).getTime());
+    expect(result.current.viewMode).toBe('lockout');
+    expect(result.current.anchor.getTime()).toBe(lockoutStart(TODAY).getTime());
   });
 
   it('goPrev/goNext shift the anchor by exactly 7 days', () => {
@@ -68,9 +69,31 @@ describe('useCalendarState', () => {
     expect(result.current.anchor.getTime()).toBe(initialAnchor.getTime() - 7 * 86_400_000);
   });
 
-  it('goToday resets the anchor to the current week regardless of navigation', () => {
+  it('goToday resets the anchor to the current lockout week regardless of navigation', () => {
     const { result } = renderHook(() => useCalendarState([]));
     act(() => result.current.goNext());
+    act(() => result.current.goNext());
+    act(() => result.current.goToday());
+    expect(result.current.anchor.getTime()).toBe(lockoutStart(TODAY).getTime());
+  });
+
+  it('setViewMode switches between Week and Lockout, re-aligning the anchor to the new mode', () => {
+    const { result } = renderHook(() => useCalendarState([]));
+    expect(result.current.viewMode).toBe('lockout');
+    expect(result.current.anchor.getTime()).toBe(lockoutStart(TODAY).getTime());
+
+    act(() => result.current.setViewMode('week'));
+    expect(result.current.viewMode).toBe('week');
+    expect(result.current.anchor.getTime()).toBe(startOfWeekSunday(lockoutStart(TODAY)).getTime());
+
+    act(() => result.current.setViewMode('lockout'));
+    expect(result.current.viewMode).toBe('lockout');
+    expect(result.current.anchor.getTime()).toBe(lockoutStart(startOfWeekSunday(lockoutStart(TODAY))).getTime());
+  });
+
+  it('goToday re-aligns to the current mode after switching view modes', () => {
+    const { result } = renderHook(() => useCalendarState([]));
+    act(() => result.current.setViewMode('week'));
     act(() => result.current.goNext());
     act(() => result.current.goToday());
     expect(result.current.anchor.getTime()).toBe(startOfWeekSunday(TODAY).getTime());
@@ -109,7 +132,7 @@ describe('useCalendarState', () => {
   });
 
   it('groups events by their start date', () => {
-    const anchor = startOfWeekSunday(TODAY);
+    const anchor = lockoutStart(TODAY);
     const eventDate = new Date(anchor);
     eventDate.setDate(eventDate.getDate() + 2);
     eventDate.setHours(20, 0, 0, 0);
