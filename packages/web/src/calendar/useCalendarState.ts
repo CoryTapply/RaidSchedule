@@ -31,6 +31,34 @@ export interface CalendarDay {
   lockoutWeekKey: string;
 }
 
+export type CalendarViewMode = 'week' | 'lockout';
+
+const VIEW_MODE_STORAGE_KEY = 'raidschedule.calendar.viewMode';
+
+/** The view mode picked in a previous session, if any. */
+function getStoredViewMode(): CalendarViewMode | null {
+  try {
+    const value = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return value === 'week' || value === 'lockout' ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+function setStoredViewMode(mode: CalendarViewMode): void {
+  try {
+    localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  } catch {
+    // Storage can be unavailable (private browsing, quota, disabled) — the
+    // toggle still works, it just won't remember the pick.
+  }
+}
+
+/** The start-of-row date for a given view mode: the Sunday on/before `d` for Week, the Tuesday on/before `d` (lockout reset) for Lockout. */
+function alignAnchor(d: Date, mode: CalendarViewMode): Date {
+  return mode === 'week' ? startOfWeekSunday(d) : lockoutStart(d);
+}
+
 interface IdentityOverride {
   raidName?: string;
   character?: CharacterSignup;
@@ -44,6 +72,8 @@ export interface CalendarState {
   days: CalendarDay[];
   selectedEvent: RaidEvent | null;
   composer: ComposerState | null;
+  viewMode: CalendarViewMode;
+  setViewMode: (mode: CalendarViewMode) => void;
   goPrev: () => void;
   goNext: () => void;
   goToday: () => void;
@@ -74,7 +104,8 @@ function clampComposerPosition(e: { clientX: number; clientY: number }): { x: nu
 }
 
 export function useCalendarState(events: RaidEvent[]): CalendarState {
-  const [anchor, setAnchor] = useState(() => startOfWeekSunday(new Date()));
+  const [viewMode, setViewModeState] = useState<CalendarViewMode>(() => getStoredViewMode() ?? 'lockout');
+  const [anchor, setAnchor] = useState(() => alignAnchor(new Date(), viewMode));
   const [selectedEvent, setSelectedEvent] = useState<RaidEvent | null>(null);
   const [hoverLockoutKey, setHoverLockoutKey] = useState<string | null>(null);
   const [composer, setComposer] = useState<ComposerState | null>(null);
@@ -89,7 +120,12 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
 
   const goPrev = useCallback(() => setAnchor((d) => addDays(d, -7)), []);
   const goNext = useCallback(() => setAnchor((d) => addDays(d, 7)), []);
-  const goToday = useCallback(() => setAnchor(startOfWeekSunday(new Date())), []);
+  const goToday = useCallback(() => setAnchor(alignAnchor(new Date(), viewMode)), [viewMode]);
+  const setViewMode = useCallback((mode: CalendarViewMode) => {
+    setStoredViewMode(mode);
+    setViewModeState(mode);
+    setAnchor((d) => alignAnchor(d, mode));
+  }, []);
   const selectEvent = useCallback((event: RaidEvent) => setSelectedEvent(event), []);
   const closeDialog = useCallback(() => setSelectedEvent(null), []);
   const setHoverWeek = useCallback((key: string) => setHoverLockoutKey(key), []);
@@ -277,6 +313,8 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     days,
     selectedEvent,
     composer,
+    viewMode,
+    setViewMode,
     goPrev,
     goNext,
     goToday,

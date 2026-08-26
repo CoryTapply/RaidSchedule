@@ -33,6 +33,14 @@
   color: var(--zp-text-3);
 }
 
+.footerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--zp-space-4);
+  flex-wrap: wrap;
+}
+
 .header {
   display: flex;
   align-items: flex-end;

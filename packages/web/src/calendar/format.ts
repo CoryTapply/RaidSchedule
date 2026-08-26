@@ -15,8 +15,10 @@ const MONTH_NAMES = [
 
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function weekdayLabels(): string[] {
-  return WEEKDAY_SHORT;
+/** Weekday header labels: Sun…Sat for Week view, Tue…Mon (the lockout week) for Lockout view. */
+export function weekdayLabels(mode: 'week' | 'lockout' = 'week'): string[] {
+  if (mode === 'week') return WEEKDAY_SHORT;
+  return [...WEEKDAY_SHORT.slice(2), ...WEEKDAY_SHORT.slice(0, 2)];
 }
 
 export function dayLabel(date: Date, isFirstOfMonth: boolean): string {

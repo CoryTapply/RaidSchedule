@@ -1,12 +1,17 @@
-import { PageShell } from '../design-system/zerpy/components/index.js';
+import { PageShell, SegmentedControl } from '../design-system/zerpy/components/index.js';
 import { useEvents } from '../api/useEvents.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { CalendarGrid } from './CalendarGrid.js';
 import { CalendarHeader } from './CalendarHeader.js';
 import { EventComposer } from './EventComposer.js';
 import { EventDetailDialog } from './EventDetailDialog.js';
-import { useCalendarState } from './useCalendarState.js';
+import { useCalendarState, type CalendarViewMode } from './useCalendarState.js';
 import styles from '../styles/calendar.module.css';
+
+const VIEW_MODE_OPTIONS = [
+  { value: 'week', label: 'Week' },
+  { value: 'lockout', label: 'Lockout' },
+] as const;
 
 export function CalendarPage() {
   const { events, loading, error } = useEvents();
@@ -33,6 +38,7 @@ export function CalendarPage() {
         ) : (
           <CalendarGrid
             days={state.days}
+            viewMode={state.viewMode}
             onSelectEvent={state.selectEvent}
             onEditEvent={state.openEditor}
             onEnterDay={state.setHoverWeek}
@@ -40,7 +46,15 @@ export function CalendarPage() {
             onOpenComposer={state.openComposer}
           />
         )}
-        <span className={styles.caption}>Right-click any day to schedule a raid. The highlighted band is the current lockout.</span>
+        <div className={styles.footerRow}>
+          <span className={styles.caption}>Right-click any day to schedule a raid. The highlighted band is the current lockout.</span>
+          <SegmentedControl
+            aria-label="Calendar view"
+            options={VIEW_MODE_OPTIONS}
+            value={state.viewMode}
+            onChange={(v) => state.setViewMode(v as CalendarViewMode)}
+          />
+        </div>
         <button type="button" onClick={() => void logout()} className={styles.signOutButton}>
           Sign out
         </button>
