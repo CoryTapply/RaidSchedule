@@ -62,25 +62,103 @@ calendar/composer/dialog/eventCard modules).
 
 ## Component vendoring — what "vendor the Zerpy source" actually meant here
 
+**Update:** as of the DesignSync-based refresh described below, this section's
+original premise no longer holds — real component source is now vendored
+verbatim. The original history is kept below because it explains *why* the
+old hand-built components looked the way they did, which is still useful
+context for anything not yet re-derived from the real source.
+
+### Original state (superseded)
+
 The exported design-system folder (`design/UpdatedClaudeDesign/ClaudeDesignOutput/_ds/zerpy-design-system-.../`)
-does **not** contain the individual component `.tsx` files the manifest and
+did **not** contain the individual component `.tsx` files the manifest and
 readme describe (`components/buttons/Button.tsx`, `components/forms/Field.tsx`,
 etc.) — only `components/controls.css` (the real pseudo-state layer) and a
 compiled `_ds_bundle.js` meant for the design tool's own runtime (an
 `x-import component-from-global-scope="ZerpyDesignSystem_203cea.Button"`
 loader), not an importable ES module for this Vite app.
 
-So `packages/web/src/design-system/zerpy/` vendors what's actually real and
-copyable — `tokens/*.css`, `components/controls.css`, `styles.css`, the
-accent logo SVG — verbatim, and `components/*.tsx` are hand-built from three
+So `packages/web/src/design-system/zerpy/` vendored what was actually real
+and copyable — `tokens/*.css`, `components/controls.css`, `styles.css`, the
+accent logo SVG — verbatim, and `components/*.tsx` were hand-built from three
 real sources: `controls.css`'s class contracts, `readme.md`'s stated
 behavior/token usage, and the exact markup in
 `design/UpdatedClaudeDesign/ClaudeDesignOutput/Raid Calendar Zerpy.dc.html`
 (the actual finished prototype, not just the CSS). Two gaps controls.css
-doesn't cover were filled the same way: `SegmentedControl`'s container/
-selected-state and `Badge`'s tones have no controls.css rule, so both are
+didn't cover were filled the same way: `SegmentedControl`'s container/
+selected-state and `Badge`'s tones had no controls.css rule, so both were
 built directly from the token set (accent-tint for selection, the four
 semantic tint+line pairs for badge tones) rather than guessed at.
+
+### Current state — real source vendored via DesignSync
+
+The claude.ai/design project backing this folder (`Zerpy Design System`,
+`projectId 203cea59-a7c1-4bdb-9b23-9c56d77ed2fc`) turned out to actually
+contain real, hand-authored `.tsx`/`.d.ts` source for every component — the
+original partial export above just never pulled it in. Using the `DesignSync`
+tool's read access, the full project (`components/`, `guidelines/`,
+`ui_kits/` demos, `uploads/`, a fuller `assets/`, and a `SKILL.md`) was
+mirrored into `_ds/zerpy-design-system-203cea59-a7c1-4bdb-9b23-9c56d77ed2fc/`.
+Only what the app actually consumes gets re-copied from there into
+`packages/web/src/design-system/zerpy/` — `guidelines/`, `ui_kits/`,
+`uploads/`, the extra logo rail variants, and `SKILL.md` stay in `_ds/` only.
+
+The 9 components this app uses (`Badge`, `Button`, `Dialog`, `Field`,
+`IconButton`, `Input`, `PageShell`, `Panel`, `SegmentedControl`, `Select`)
+are now the real vendored `.tsx`, not hand-built. Per `readme.md`'s own
+stated convention ("when copying a component into a TS app, take the `.tsx`
+and drop the `.d.ts`"), only the `.tsx` was kept for each. All 9 turned out
+to use **zero CSS Modules** — every one is self-contained via inline
+`style={{...}}` plus the global `zp-*` classes in `controls.css`/`styles.css`
+— so the `.module.css` siblings the hand-built versions needed
+(`Badge.module.css`, `Dialog.module.css`, `Field.module.css`,
+`IconButton.module.css`, `PageShell.module.css`, `Panel.module.css`,
+`SegmentedControl.module.css`) were deleted as dead weight.
+
+Refreshing `controls.css` from the real project was a **required** step, not
+a no-op: the currently-vendored copy predated `.zp-in-err`,
+`.zp-sel-wrap`/`.zp-sel`/`.zp-sel-arrow`, and `.zp-seg-thumb` — rules the
+real `Input`, `Select`, and `SegmentedControl` components depend on.
+
+Small adaptations were needed to drop the real source into this repo's flat
+`components/` layout and strict TS config (the source project nests
+components under `buttons/forms/data/feedback/surfaces/marketing/`
+subfolders and doesn't use `verbatimModuleSyntax`):
+- `Dialog.tsx`'s `import { IconButton } from '../buttons/IconButton'` became
+  `from './IconButton.js'` (flat layout, plus this repo's NodeNext-style
+  explicit `.js` extensions on relative imports).
+- `IconButton.tsx`'s `import { Button, ButtonProps } from './Button'` became
+  a type-only import for `ButtonProps` (`verbatimModuleSyntax`).
+- `SegmentedControl`'s `options` prop widened from `Array<...>` to
+  `ReadonlyArray<...>` so the existing call sites' `as const` tuples
+  (`FACTION_OPTIONS`, `STATUS_OPTIONS`) still typecheck, and its `extends
+  HTMLAttributes<HTMLDivElement>` narrowed to `Omit<..., 'onChange'>` since
+  the real component's `onChange: (next: string) => void` collides with the
+  DOM `onChange` event-handler signature otherwise.
+- `EventComposer.tsx`'s two `<SegmentedControl ariaLabel="…">` call sites
+  became `aria-label="…"` — the real component has no camelCase
+  convenience prop, it just spreads native HTML attributes.
+- The real `SegmentedControl` renders `role="tablist"`/`role="tab"` with
+  `aria-selected` (plus an animated sliding-thumb indicator, driven by
+  `.zp-seg-thumb`) instead of the hand-built version's plain
+  `role="group"`/`aria-pressed"` buttons — `EventComposer.test.tsx`'s
+  assertions were updated from `getByRole('button', ...)` /
+  `aria-pressed` to `getByRole('tab', ...)` / `aria-selected` to match.
+- The real `Select` wraps its `<select>` in `<span className="zp-sel-wrap">`
+  with a `.zp-sel-arrow` indicator span rather than rendering a bare
+  `<select>` — a DOM structure change, but the existing call site (passing
+  `<option>` children) still renders correctly since the real component
+  falls back to `children` when no `options` array is passed.
+- One vendored-as-is line in `SegmentedControl.tsx` (`data-init={settled.current
+  ? undefined : '1'}`, reading a ref during render to skip the initial-mount
+  transition) trips this repo's `react-hooks/refs` lint rule; carries a
+  scoped `eslint-disable-next-line` rather than being restructured, since
+  the goal is vendoring the real source, not rewriting it.
+
+Every other change was purely additive (new optional props with defaults
+matching the old behavior — `Badge`'s `dot`, `Panel`'s `elevation`,
+`PageShell`/`Panel`'s widened `maxWidth`/`padding` types, etc.) and needed no
+call-site changes.
 
 ## Other fixes made in passing
 

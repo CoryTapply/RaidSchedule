@@ -41,6 +41,17 @@ export function toLocalHHMM(date: Date): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
+/** "HH:MM" to minutes-since-midnight, the value shape the Zerpy TimeSelect control uses. */
+export function hhmmToTimeValue(hhmm: string): number {
+  const [h, m] = hhmm.split(':').map(Number);
+  return (h ?? 0) * 60 + (m ?? 0);
+}
+
+/** Inverse of hhmmToTimeValue — minutes-since-midnight back to "HH:MM". */
+export function timeValueToHHMM(value: number): string {
+  return `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+}
+
 const LAST_CLASS_STORAGE_KEY = 'raidschedule.composer.lastClass';
 
 /** The class picked in a previous session's composer, if any and still a recognized WowClass. */

@@ -1,0 +1,48 @@
+<!-- @dsCard group="Components" viewport="700x300" name="Data" subtitle="Badges, tags, counts, stats, progress and skeletons" -->
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>Data</title>
+<link rel="stylesheet" href="../../styles.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../../_ds_bundle.js"></script>
+<style>html,body{margin:0}body{padding:18px;background:var(--zp-bg);color:var(--zp-text);font-family:var(--zp-font-body);box-sizing:border-box}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:12px}.col{display:flex;flex-direction:column;gap:12px}
+.mi{font:var(--zp-text-micro);letter-spacing:var(--zp-tracking-micro);text-transform:uppercase;color:var(--zp-text-4)}
+a{color:var(--zp-accent-400);text-decoration:none}a:hover{color:var(--zp-accent-300)}</style></head><body><div id="root"></div>
+<script type="text/babel">
+const { Badge, Tag, CountBadge, StatCard, Progress, Skeleton } = window.ZerpyDesignSystem_203cea;
+function Card() {
+  return (
+    <div className="col" style={{gap:18}}>
+      <div className="row">
+        <Badge tone="success">Confirmed</Badge>
+        <Badge tone="warning">Tentative</Badge>
+        <Badge tone="danger">Withdrawn</Badge>
+        <Badge tone="info">Timewalking</Badge>
+        <Badge dot={false}>Draft</Badge>
+        <CountBadge>12</CountBadge>
+        <CountBadge tone="danger">3</CountBadge>
+      </div>
+      <div className="row">
+        <Tag selected>Mythic</Tag>
+        <Tag>Heroic</Tag>
+        <Tag rail="var(--zp-class-druid)">Druid</Tag>
+        <Tag rail="var(--zp-faction-horde)">Horde</Tag>
+        <Tag onDismiss={()=>{}}>Tuesday</Tag>
+      </div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:12}}>
+        <StatCard label="Attendance" value="92%" delta="+4 vs last tier" deltaTone="up" />
+        <StatCard label="Marks needed" value="180" delta="+5 vs average" deltaTone="down" />
+        <StatCard label="Alts" value="7" />
+        <StatCard label="Parses" loading />
+      </div>
+      <div className="row" style={{gap:24}}>
+        <Progress value={68} label="Warsong marks" caption="14 / 20" style={{maxWidth:240}} />
+        <Progress label="Syncing" style={{maxWidth:180}} />
+        <Skeleton width={120} height={38} radius="var(--zp-radius)" shape="pulse" />
+      </div>
+    </div>
+  );
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<Card />);
+</script></body></html>

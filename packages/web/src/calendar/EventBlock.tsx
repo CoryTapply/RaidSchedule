@@ -15,10 +15,12 @@ export function EventBlock({ placement, onSelect, onEdit }: EventBlockProps) {
   const color = classColor(event.character.className);
   const variantClass = event.status === 'confirmed' ? styles.confirmed : styles.pending;
   const showMeta = laneCount < 2;
-  // A 1-hour-or-shorter card doesn't have room for a separate time·character
-  // line — collapse it into "Title · Character" on the title's own line
-  // instead, and shrink the Horde mark to match.
-  const isShort = heightHours <= 1;
+  // A card up to 1.5h doesn't reliably have room for a separate
+  // time·character line below the title (the two lines need ~38px of
+  // content box, which isn't available until ~1.43h) — collapse it into
+  // "Title · Character" on the title's own line instead, and shrink the
+  // Horde mark to match.
+  const isShort = heightHours <= 1.5;
   const isTiny = heightHours <= 0.5;
 
   const style = {

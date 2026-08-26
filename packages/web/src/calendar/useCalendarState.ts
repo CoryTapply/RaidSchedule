@@ -60,10 +60,16 @@ export interface CalendarState {
   deleteComposerEvent: () => void;
 }
 
-/** Composer anchor point, clamped to the viewport — ported from the design prototype's popover placement. */
+/**
+ * Composer anchor point, clamped to the viewport — ported from the design prototype's
+ * popover placement. Only pins the initial top-left corner (width is fixed, so `x` can be
+ * clamped exactly here); the panel's height varies with content, so `EventComposer` itself
+ * re-clamps `top` against its actual measured height after render, keeping the whole panel
+ * — footer included — on screen without needing to scroll.
+ */
 function clampComposerPosition(e: { clientX: number; clientY: number }): { x: number; y: number } {
   const x = Math.max(8, Math.min(e.clientX, window.innerWidth - 348));
-  const y = Math.max(12, Math.min(e.clientY, Math.max(12, window.innerHeight - 528)));
+  const y = Math.max(12, e.clientY);
   return { x, y };
 }
 
