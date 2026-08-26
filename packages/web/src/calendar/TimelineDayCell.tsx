@@ -10,12 +10,22 @@ export interface TimelineDayCellProps {
   window: RowWindow;
   hours: number[];
   onSelectEvent: (event: RaidEvent) => void;
+  onEditEvent: (event: RaidEvent, e: { clientX: number; clientY: number }) => void;
   onEnter: (lockoutWeekKey: string) => void;
   onLeave: () => void;
   onOpenComposer: (day: CalendarDay, e: { clientX: number; clientY: number }) => void;
 }
 
-export function TimelineDayCell({ day, window, hours, onSelectEvent, onEnter, onLeave, onOpenComposer }: TimelineDayCellProps) {
+export function TimelineDayCell({
+  day,
+  window,
+  hours,
+  onSelectEvent,
+  onEditEvent,
+  onEnter,
+  onLeave,
+  onOpenComposer,
+}: TimelineDayCellProps) {
   const placements = layoutDayEvents(day.events, window);
 
   return (
@@ -36,7 +46,7 @@ export function TimelineDayCell({ day, window, hours, onSelectEvent, onEnter, on
         {dayLabel(day.date, day.isFirstOfMonth)}
       </div>
       {placements.map((placement) => (
-        <EventBlock key={placement.event.id} placement={placement} onSelect={onSelectEvent} />
+        <EventBlock key={placement.event.id} placement={placement} onSelect={onSelectEvent} onEdit={onEditEvent} />
       ))}
     </div>
   );

@@ -1,0 +1,8 @@
+.panel {
+  border: 1px solid var(--zp-line);
+  border-radius: var(--zp-radius);
+  background: var(--zp-surface-panel);
+  backdrop-filter: blur(var(--zp-blur-md));
+  box-shadow: var(--zp-elev-panel);
+  overflow: hidden;
+}

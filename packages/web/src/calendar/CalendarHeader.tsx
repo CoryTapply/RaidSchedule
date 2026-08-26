@@ -1,7 +1,7 @@
 import { NavControls } from './NavControls.js';
 import { rangeLabel } from './format.js';
 import styles from '../styles/calendar.module.css';
-import zerpyLogo from '../assets/ZerpyLogo.svg';
+import zerpyLogo from '../design-system/zerpy/assets/zerpy-accent.svg';
 
 export interface CalendarHeaderProps {
   rangeStart: Date;

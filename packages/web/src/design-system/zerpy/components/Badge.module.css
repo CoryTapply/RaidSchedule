@@ -1,0 +1,69 @@
+/* Badge has no entry in controls.css (it isn't a pseudo-stateful control),
+   so its tones are built directly from the four semantic tint+line pairs in
+   tokens/colors.css. Matches the reference specimen: a glowing status dot
+   (readme.md's "a 5-6px glowing dot is a status") plus uppercase, tracked
+   mono text — not the plain sentence-case label this started as. Radius is
+   the sharp 4px default, not the pill readme.md reserves for counts and
+   progress tracks (CountBadge/Progress) specifically. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: var(--zp-radius);
+  font: var(--zp-text-micro);
+  letter-spacing: var(--zp-tracking-micro);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+.success {
+  color: var(--zp-success);
+  background: var(--zp-success-tint);
+  border: 1px solid var(--zp-success-line);
+}
+.success .dot {
+  background: var(--zp-success);
+  box-shadow: 0 0 6px var(--zp-success);
+}
+.warning {
+  color: var(--zp-warning);
+  background: var(--zp-warning-tint);
+  border: 1px solid var(--zp-warning-line);
+}
+.warning .dot {
+  background: var(--zp-warning);
+  box-shadow: 0 0 6px var(--zp-warning);
+}
+.danger {
+  color: var(--zp-danger-text);
+  background: var(--zp-danger-tint);
+  border: 1px solid var(--zp-danger-line);
+}
+.danger .dot {
+  background: var(--zp-danger);
+  box-shadow: 0 0 6px var(--zp-danger);
+}
+.info {
+  color: var(--zp-info);
+  background: var(--zp-info-tint);
+  border: 1px solid var(--zp-info-line);
+}
+.info .dot {
+  background: var(--zp-info);
+  box-shadow: 0 0 6px var(--zp-info);
+}
+.neutral {
+  color: var(--zp-text-2);
+  background: var(--zp-surface-2);
+  border: 1px solid var(--zp-line-strong);
+}
+.neutral .dot {
+  background: var(--zp-text-2);
+}

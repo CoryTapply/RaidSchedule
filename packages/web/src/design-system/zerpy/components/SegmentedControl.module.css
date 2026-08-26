@@ -1,0 +1,44 @@
+/* controls.css's .zp-seg-btn assumes equal-width flex cells with a shared
+   divider between them, which isn't what the reference specimen shows: an
+   outer bordered box, options sized to their own content (not flex:1),
+   and only the selected option getting an inset bordered "pill" — the
+   unselected ones are plain text with no divider at all. Built directly
+   from tokens instead of that class. */
+.seg {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 4px;
+  height: var(--zp-control-h);
+  padding: 4px;
+  border: 1px solid var(--zp-line);
+  border-radius: var(--zp-radius-md);
+}
+.opt {
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border-radius: var(--zp-radius);
+  font: var(--zp-text-label);
+  color: var(--zp-text-3);
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--zp-dur) var(--zp-ease);
+}
+.opt:hover:not(:disabled):not(.selected) {
+  color: var(--zp-text);
+  background: var(--zp-surface-1);
+}
+.opt:focus-visible {
+  outline: none;
+  border-color: var(--zp-focus-line);
+  box-shadow: var(--zp-focus-shadow);
+}
+/* readme.md: "--zp-line-accent for anything active or selected", and
+   "Hover: a tint one step up plus a border brightening to --zp-line-accent"
+   — a persistent selection reuses that same tint+line-accent pairing. */
+.selected {
+  color: var(--zp-text);
+  background: var(--zp-surface-2);
+  border-color: var(--zp-line-accent);
+}

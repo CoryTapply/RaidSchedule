@@ -10,10 +10,10 @@ describe('NavControls', () => {
     const onToday = vi.fn();
     render(<NavControls onPrev={onPrev} onNext={onNext} onToday={onToday} />);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Previous week' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Previous three weeks' }));
     expect(onPrev).toHaveBeenCalledTimes(1);
 
-    await userEvent.click(screen.getByRole('button', { name: 'Next week' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Next three weeks' }));
     expect(onNext).toHaveBeenCalledTimes(1);
 
     await userEvent.click(screen.getByRole('button', { name: 'Today' }));

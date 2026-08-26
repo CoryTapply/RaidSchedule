@@ -1,0 +1,15 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.label {
+  font: var(--zp-text-micro);
+  letter-spacing: var(--zp-tracking-micro);
+  text-transform: uppercase;
+  color: var(--zp-text-4);
+}
+.hint {
+  font: var(--zp-text-sm);
+  color: var(--zp-text-4);
+}

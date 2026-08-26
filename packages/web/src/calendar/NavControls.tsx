@@ -1,4 +1,4 @@
-import { CaretLeft, CaretRight } from '@phosphor-icons/react';
+import { Button, IconButton } from '../design-system/zerpy/components/index.js';
 import styles from '../styles/calendar.module.css';
 
 export interface NavControlsProps {
@@ -11,16 +11,16 @@ export function NavControls({ onPrev, onNext, onToday }: NavControlsProps) {
   return (
     <div className={styles.controls}>
       <div className={styles.navGroup}>
-        <button type="button" className={styles.navButton} onClick={onPrev} aria-label="Previous week">
-          <CaretLeft weight="bold" />
-        </button>
-        <button type="button" className={styles.navButton} onClick={onNext} aria-label="Next week">
-          <CaretRight weight="bold" />
-        </button>
+        <IconButton label="Previous three weeks" onClick={onPrev}>
+          ‹
+        </IconButton>
+        <IconButton label="Next three weeks" onClick={onNext}>
+          ›
+        </IconButton>
       </div>
-      <button type="button" className={styles.todayButton} onClick={onToday}>
+      <Button intent="primary" onClick={onToday}>
         Today
-      </button>
+      </Button>
     </div>
   );
 }

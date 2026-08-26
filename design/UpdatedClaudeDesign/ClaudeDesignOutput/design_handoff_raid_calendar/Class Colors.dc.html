@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-e3096d91-7b26-4600-8cb0-ac98c06c66bf/styles.css">
+  <script src="_ds/nocturne-e3096d91-7b26-4600-8cb0-ac98c06c66bf/_ds_bundle.js"></script>
+  <style>body{margin:0;background:var(--color-bg);font-family:var(--font-body);}</style>
+</helmet>
+<div style="min-height:100vh;box-sizing:border-box;background:var(--color-bg);color:var(--color-text);padding:var(--space-6);max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:var(--space-4);">
+
+  <div style="display:flex;flex-direction:column;gap:4px;">
+    <div style="font:500 22px/1.2 var(--font-heading);color:var(--color-text);">Event colors by class</div>
+    <div style="font:400 13px var(--font-body);color:var(--color-neutral-300);">Left column: signed up (diagonal). Right column: roster confirmed (solid fill, bold border).</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:120px minmax(0,1fr) minmax(0,1fr);gap:12px 20px;align-items:center;">
+    <div style="font:500 11px var(--font-body);letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-400);">Class</div>
+    <div style="font:500 11px var(--font-body);letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-400);">Signed up</div>
+    <div style="font:500 11px var(--font-body);letter-spacing:0.06em;text-transform:uppercase;color:var(--color-neutral-400);">Roster confirmed</div>
+
+    <sc-for list="{{ rows }}" as="row" hint-placeholder-count="13">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+        <span style="width:10px;height:10px;border-radius:50%;background:{{ row.color }};flex:none;"></span>
+        <span style="font:500 13px var(--font-body);color:var(--color-neutral-100);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ row.name }}</span>
+      </div>
+      <div style="border-radius:var(--radius-sm);padding:8px 10px;min-width:0;box-sizing:border-box;border:{{ row.signed.border }};background:{{ row.signed.bg }};display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <span style="width:18px;height:18px;border-radius:4px;background:{{ row.signed.badgeBg }};color:{{ row.signed.badgeColor }};font:600 10px var(--font-body);display:flex;align-items:center;justify-content:center;flex:none;">{{ row.initial }}</span>
+          <span style="font:500 12.5px var(--font-body);color:{{ row.signed.textColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nerub-ar Palace</span>
+        </div>
+        <span style="font:400 11px var(--font-body);color:var(--color-neutral-300);padding-left:26px;">8:00 PM · {{ row.character }}</span>
+      </div>
+      <div style="border-radius:var(--radius-sm);padding:8px 10px;min-width:0;box-sizing:border-box;border:{{ row.confirmed.border }};background:{{ row.confirmed.bg }};display:flex;flex-direction:column;gap:3px;">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+          <span style="width:18px;height:18px;border-radius:4px;background:{{ row.confirmed.badgeBg }};color:{{ row.confirmed.badgeColor }};font:600 10px var(--font-body);display:flex;align-items:center;justify-content:center;flex:none;">{{ row.initial }}</span>
+          <span style="font:500 12.5px var(--font-body);color:{{ row.confirmed.textColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nerub-ar Palace</span>
+        </div>
+        <span style="font:400 11px var(--font-body);color:{{ row.confirmed.metaColor }};padding-left:26px;">8:00 PM · {{ row.character }}</span>
+      </div>
+    </sc-for>
+  </div>
+
+  <a href="Raid Calendar.dc.html" style="font:400 13px var(--font-body);color:var(--color-accent-300);text-decoration:none;" style-hover="color:var(--color-accent-200);">← Back to calendar</a>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CLASSES = [
+  ['Death Knight', '#C41E3A', 'Rimeblade'],
+  ['Demon Hunter', '#A330C9', 'Sablewing'],
+  ['Druid', '#FF7C0A', 'Thrashclaw'],
+  ['Evoker', '#33937F', 'Emberscale'],
+  ['Hunter', '#AAD372', 'Windrunner'],
+  ['Mage', '#3FC7EB', 'Frostveil'],
+  ['Monk', '#00FF98', 'Palefist'],
+  ['Paladin', '#F48CBA', 'Dawnward'],
+  ['Priest', '#FFFFFF', 'Hollowlight'],
+  ['Rogue', '#FFF468', 'Nightbleed'],
+  ['Shaman', '#0070DD', 'Stormcaller'],
+  ['Warlock', '#8788EE', 'Voidcurse'],
+  ['Warrior', '#C69B6D', 'Ironhide'],
+];
+
+class Component extends DCLogic {
+  variants(color) {
+    return {
+      signed: {
+        border: `1px solid color-mix(in srgb, ${color} 60%, transparent)`,
+        bg: `repeating-linear-gradient(45deg, color-mix(in srgb, ${color} 26%, transparent) 0 5px, transparent 5px 10px), var(--color-neutral-800)`,
+        textColor: 'var(--color-neutral-100)',
+        badgeBg: `color-mix(in srgb, ${color} 45%, var(--color-neutral-800))`,
+        badgeColor: color,
+      },
+      confirmed: {
+        border: `2px solid ${color}`,
+        bg: `color-mix(in srgb, ${color} 30%, var(--color-neutral-800))`,
+        textColor: 'var(--color-text)',
+        metaColor: 'var(--color-neutral-200)',
+        badgeBg: color,
+        badgeColor: '#161826',
+      },
+    };
+  }
+
+  renderVals() {
+    return {
+      rows: CLASSES.map(([name, color, character]) => {
+        const v = this.variants(color);
+        return { name, color, character, initial: name[0], signed: v.signed, confirmed: v.confirmed };
+      }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>

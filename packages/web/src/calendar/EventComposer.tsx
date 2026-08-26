@@ -1,6 +1,5 @@
-import type { CSSProperties } from 'react';
-import { X } from '@phosphor-icons/react';
-import { WOW_CLASSES, type WowClass } from '@raidschedule/shared';
+import { WOW_CLASSES, type RosterStatus, type WowClass } from '@raidschedule/shared';
+import { Button, Field, IconButton, Input, Select, SegmentedControl } from '../design-system/zerpy/components/index.js';
 import { classColor } from './classColors.js';
 import type { ComposerState } from './composer.js';
 import styles from '../styles/composer.module.css';
@@ -10,15 +9,42 @@ export interface EventComposerProps {
   onChange: (patch: Partial<ComposerState>) => void;
   onCancel: () => void;
   onSave: () => void;
+  onDelete: () => void;
 }
 
-export function EventComposer({ composer, onChange, onCancel, onSave }: EventComposerProps) {
+const STATUS_OPTIONS = ['Confirmed', 'Signed up'] as const;
+const FACTION_OPTIONS = ['Alliance', 'Horde'] as const;
+
+function statusToLabel(status: RosterStatus): string {
+  return status === 'confirmed' ? 'Confirmed' : 'Signed up';
+}
+
+function labelToStatus(label: string): RosterStatus {
+  return label === 'Confirmed' ? 'confirmed' : 'pending';
+}
+
+const MODE_LABEL: Record<ComposerState['mode'], string> = {
+  create: 'New event',
+  'edit-custom': 'Edit event',
+  'edit-raid-helper': 'Edit Raid-Helper event',
+};
+
+export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }: EventComposerProps) {
   const canSave = composer.title.trim().length > 0 && !composer.saving;
-  const characterColor = classColor(composer.cls);
+  const classHex = classColor(composer.cls);
+  const isConfirmed = composer.status === 'confirmed';
+  const railBackground = isConfirmed
+    ? `linear-gradient(180deg, ${classHex}, color-mix(in srgb, ${classHex} 35%, transparent))`
+    : `linear-gradient(180deg, color-mix(in srgb, ${classHex} 55%, transparent), color-mix(in srgb, ${classHex} 12%, transparent))`;
+  const factionColor = composer.isHorde ? 'var(--zp-faction-horde)' : 'var(--zp-faction-alliance)';
+  const timeEditable = composer.mode !== 'edit-raid-helper';
+  const canDelete = composer.mode === 'edit-custom';
+  const fromApi = composer.mode === 'edit-raid-helper';
+  const isNew = composer.mode === 'create';
 
   return (
     <div
-      className={styles.overlay}
+      className={`${styles.overlay} ${composer.centered ? styles.overlayCentered : ''}`}
       onClick={onCancel}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -26,8 +52,8 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
       }}
     >
       <div
-        className={styles.panel}
-        style={{ left: composer.x, top: composer.y }}
+        className={`${styles.panel} ${composer.centered ? styles.panelCentered : ''}`}
+        style={composer.centered ? undefined : { left: composer.x, top: composer.y }}
         onClick={(e) => e.stopPropagation()}
         onContextMenu={(e) => {
           e.preventDefault();
@@ -40,150 +66,125 @@ export function EventComposer({ composer, onChange, onCancel, onSave }: EventCom
         }}
       >
         <div className={styles.header}>
+          <span className={styles.headerRail} style={{ background: classHex }} />
           <div className={styles.headerText}>
-            <span className={styles.headerTitle}>New event</span>
+            <span className={styles.modeLabel}>{MODE_LABEL[composer.mode]}</span>
             <span className={styles.headerDate}>{composer.dateLabel}</span>
           </div>
-          <button type="button" className={styles.closeButton} onClick={onCancel} aria-label="Close">
-            <X weight="bold" />
-          </button>
+          <IconButton label="Close" intent="ghost" size="sm" onClick={onCancel}>
+            ✕
+          </IconButton>
         </div>
 
         <div className={styles.body}>
-          <div className={styles.field}>
-            <span className={styles.label}>Title</span>
-            <input
-              className={styles.input}
-              type="text"
-              placeholder="Black Temple"
+          <Field label="Title">
+            <Input
+              aria-label="Title"
+              placeholder="Nerub-ar Palace"
               value={composer.title}
               onChange={(e) => onChange({ title: e.target.value })}
               autoFocus
             />
-          </div>
+          </Field>
 
-          <div className={styles.timeRow}>
-            <div className={styles.field}>
-              <span className={styles.label}>Start</span>
-              <input
-                className={styles.input}
-                type="time"
-                value={composer.start}
-                onChange={(e) => onChange({ start: e.target.value })}
-              />
+          {timeEditable ? (
+            <div className={styles.timeRow}>
+              <Field label="Start">
+                <Input aria-label="Start" type="time" value={composer.start} onChange={(e) => onChange({ start: e.target.value })} />
+              </Field>
+              <Field label="End">
+                <Input aria-label="End" type="time" value={composer.end} onChange={(e) => onChange({ end: e.target.value })} />
+              </Field>
             </div>
-            <div className={styles.field}>
-              <span className={styles.label}>End</span>
-              <input
-                className={styles.input}
-                type="time"
-                value={composer.end}
-                onChange={(e) => onChange({ end: e.target.value })}
-              />
-            </div>
-          </div>
+          ) : (
+            <Field label="Time" hint="Set in Raid-Helper.">
+              <div className={styles.timeWell}>
+                <span className={styles.timeWellText}>{composer.timeLabel}</span>
+              </div>
+            </Field>
+          )}
 
-          <div className={styles.field}>
-            <span className={styles.label}>Character</span>
-            <div className={styles.characterRow}>
-              <span className={styles.chip} style={{ '--class-color': characterColor } as CSSProperties} />
-              <input
-                className={styles.input}
-                type="text"
-                placeholder="Character name"
-                value={composer.character}
-                onChange={(e) => onChange({ character: e.target.value })}
-              />
-            </div>
-          </div>
+          <Field label="Character">
+            <Input
+              aria-label="Character"
+              placeholder="Character name"
+              value={composer.character}
+              onChange={(e) => onChange({ character: e.target.value })}
+            />
+          </Field>
 
-          <div className={styles.field}>
-            <span className={styles.label}>Class</span>
-            <div className={styles.characterRow}>
-              <span className={styles.chip} style={{ '--class-color': characterColor } as CSSProperties} />
-              <select
-                className={styles.input}
-                aria-label="Class"
-                value={composer.cls}
-                onChange={(e) => onChange({ cls: e.target.value as WowClass })}
-              >
-                {WOW_CLASSES.map((cls: WowClass) => (
-                  <option key={cls} value={cls}>
-                    {cls}
-                  </option>
-                ))}
-              </select>
+          <Field label="Class">
+            <div className={styles.swatchRow}>
+              <span className={styles.swatch} style={{ background: classHex }} />
+              <div className={styles.swatchField}>
+                <Select
+                  aria-label="Class"
+                  value={composer.cls}
+                  onChange={(e) => onChange({ cls: e.target.value as WowClass })}
+                >
+                  {WOW_CLASSES.map((cls) => (
+                    <option key={cls} value={cls}>
+                      {cls}
+                    </option>
+                  ))}
+                </Select>
+              </div>
             </div>
-          </div>
+          </Field>
 
-          <div className={styles.field}>
-            <span className={styles.label}>Status</span>
-            <div className={styles.statusToggle}>
-              <button
-                type="button"
-                className={`${styles.statusOption} ${composer.status === 'pending' ? styles.statusOptionSelected : ''}`}
-                onClick={() => onChange({ status: 'pending' })}
-                aria-pressed={composer.status === 'pending'}
-              >
-                Tentative
-              </button>
-              <button
-                type="button"
-                className={`${styles.statusOption} ${composer.status === 'confirmed' ? styles.statusOptionSelected : ''}`}
-                onClick={() => onChange({ status: 'confirmed' })}
-                aria-pressed={composer.status === 'confirmed'}
-              >
-                Signed up
-              </button>
+          <Field label="Faction">
+            <div className={styles.swatchRow}>
+              <span className={styles.swatch} style={{ background: factionColor }} />
+              <div className={styles.swatchField}>
+                <SegmentedControl
+                  ariaLabel="Faction"
+                  options={FACTION_OPTIONS}
+                  value={composer.isHorde ? 'Horde' : 'Alliance'}
+                  onChange={(v) => onChange({ isHorde: v === 'Horde' })}
+                />
+              </div>
             </div>
-          </div>
+          </Field>
 
-          <div className={styles.field}>
-            <span className={styles.label}>Faction</span>
-            <div className={styles.statusToggle}>
-              <button
-                type="button"
-                className={`${styles.statusOption} ${styles.factionOptionAlliance} ${!composer.isHorde ? styles.statusOptionSelected : ''}`}
-                onClick={() => onChange({ isHorde: false })}
-                aria-pressed={!composer.isHorde}
-              >
-                Alliance
-              </button>
-              <button
-                type="button"
-                className={`${styles.statusOption} ${styles.factionOptionHorde} ${composer.isHorde ? styles.statusOptionSelected : ''}`}
-                onClick={() => onChange({ isHorde: true })}
-                aria-pressed={composer.isHorde}
-              >
-                Horde
-              </button>
+          <Field label="Status">
+            <div className={styles.swatchRow}>
+              <span className={styles.swatch} style={{ background: railBackground }}>
+                {!isConfirmed && <span className={styles.swatchStripe} />}
+              </span>
+              <div className={styles.swatchField}>
+                <SegmentedControl
+                  ariaLabel="Status"
+                  options={STATUS_OPTIONS}
+                  value={statusToLabel(composer.status)}
+                  onChange={(v) => onChange({ status: labelToStatus(v) })}
+                />
+              </div>
             </div>
-          </div>
-
-          <div className={styles.recurrenceRow}>
-            <span className={styles.recurrenceDot} />
-            <span>One-time event</span>
-          </div>
+          </Field>
 
           {composer.saveError && (
-            <div style={{ color: '#e5484d', fontSize: 13 }} role="alert">
+            <span className={styles.saveError} role="alert">
               {composer.saveError}
-            </div>
+            </span>
           )}
         </div>
 
         <div className={styles.footer}>
-          <button type="button" className={styles.cancelButton} onClick={onCancel}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={`${styles.saveButton} ${canSave ? '' : styles.saveButtonDisabled}`}
-            onClick={onSave}
-            disabled={!canSave}
-          >
-            {composer.saving ? 'Saving…' : 'Add event'}
-          </button>
+          {canDelete && (
+            <Button intent="ghost" size="sm" onClick={onDelete} disabled={composer.saving}>
+              Delete
+            </Button>
+          )}
+          {fromApi && <span className={styles.footerNote}>From Raid-Helper</span>}
+          {isNew && <span className={styles.footerNote}>Esc to dismiss</span>}
+          <div className={styles.footerActions}>
+            <Button intent="ghost" size="sm" onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button intent="primary" size="sm" disabled={!canSave} onClick={onSave}>
+              {composer.saving ? 'Saving…' : isNew ? 'Add event' : 'Save'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

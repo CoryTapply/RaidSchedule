@@ -65,3 +65,21 @@ export interface CreateCustomEventInput {
   character: CharacterSignup;
   isHorde: boolean;
 }
+
+/** All fields optional — a PATCH only writes the keys it's given. */
+export type UpdateCustomEventInput = Partial<CreateCustomEventInput>;
+
+/**
+ * A per-sign-up local override for a Raid-Helper-sourced event: the raid's
+ * schedule (`startsAt`/`endsAt`) always comes from raid-helper.xyz and can't
+ * be overridden, but identity fields can. `isHorde` is the odd one out —
+ * it's stored keyed by the shared raid-helper event id (every sign-up on
+ * the same raid), not this specific sign-up, same as the pre-existing
+ * horde-tag mechanism.
+ */
+export interface RaidHelperEventOverrideInput {
+  raidName?: string;
+  character?: Pick<CharacterSignup, 'name' | 'className'>;
+  status?: RosterStatus;
+  isHorde?: boolean;
+}

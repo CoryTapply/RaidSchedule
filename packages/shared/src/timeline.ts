@@ -10,11 +10,18 @@ function minutesOfDay(iso: string): number {
   return d.getHours() * 60 + d.getMinutes();
 }
 
-/** Events without an explicit end (a rare custom-event edge case) get a 1-hour placeholder block. */
+/**
+ * Events without an explicit end (a rare custom-event edge case) get a
+ * 1-hour placeholder block. Events with a start/end that are equal (seen in
+ * live raid-helper.xyz data) or otherwise non-positive get a 2-hour
+ * placeholder instead — a zero-length block reads as an unknown duration,
+ * not a genuinely instantaneous event, and 2 hours is a more typical raid
+ * length than 1.
+ */
 function durationMinutes(event: Pick<RaidEvent, 'startsAt' | 'endsAt'>): number {
   if (!event.endsAt) return 60;
   const diff = (new Date(event.endsAt).getTime() - new Date(event.startsAt).getTime()) / 60_000;
-  return diff > 0 ? diff : 60;
+  return diff > 0 ? diff : 120;
 }
 
 /**

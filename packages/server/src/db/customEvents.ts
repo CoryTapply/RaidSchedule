@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { CreateCustomEventInput, RaidEvent, RosterStatus, WowClass } from '@raidschedule/shared';
+import type { CreateCustomEventInput, RaidEvent, UpdateCustomEventInput, WowClass } from '@raidschedule/shared';
 import type Database from 'better-sqlite3';
 
 interface CustomEventRow {
@@ -41,18 +41,32 @@ export function deleteCustomEvent(db: Database.Database, id: string): boolean {
   return result.changes > 0;
 }
 
-export function updateCustomEventStatus(db: Database.Database, id: string, status: RosterStatus): RaidEvent | null {
-  const result = db.prepare('UPDATE custom_events SET status = ? WHERE id = ?').run(status, id);
-  if (result.changes === 0) return null;
-  const row = db.prepare('SELECT * FROM custom_events WHERE id = ?').get(id) as CustomEventRow;
-  return rowToRaidEvent(row);
-}
+/** Merges `patch` onto the existing row — a PATCH only writes the keys it's given. Returns null if `id` doesn't exist. */
+export function updateCustomEvent(db: Database.Database, id: string, patch: UpdateCustomEventInput): RaidEvent | null {
+  const existing = db.prepare('SELECT * FROM custom_events WHERE id = ?').get(id) as CustomEventRow | undefined;
+  if (!existing) return null;
 
-export function updateCustomEventFaction(db: Database.Database, id: string, isHorde: boolean): RaidEvent | null {
-  const result = db.prepare('UPDATE custom_events SET is_horde = ? WHERE id = ?').run(isHorde ? 1 : 0, id);
-  if (result.changes === 0) return null;
-  const row = db.prepare('SELECT * FROM custom_events WHERE id = ?').get(id) as CustomEventRow;
-  return rowToRaidEvent(row);
+  const merged: CustomEventRow = {
+    ...existing,
+    raid_name: patch.raidName ?? existing.raid_name,
+    starts_at: patch.startsAt ?? existing.starts_at,
+    ends_at: patch.endsAt !== undefined ? patch.endsAt : existing.ends_at,
+    status: patch.status ?? existing.status,
+    character_name: patch.character?.name ?? existing.character_name,
+    character_class_name: patch.character?.className ?? existing.character_class_name,
+    character_spec: patch.character?.spec !== undefined ? patch.character.spec : existing.character_spec,
+    is_horde: patch.isHorde !== undefined ? (patch.isHorde ? 1 : 0) : existing.is_horde,
+  };
+
+  db.prepare(
+    `UPDATE custom_events
+     SET raid_name = @raid_name, starts_at = @starts_at, ends_at = @ends_at, status = @status,
+         character_name = @character_name, character_class_name = @character_class_name,
+         character_spec = @character_spec, is_horde = @is_horde
+     WHERE id = @id`,
+  ).run({ ...merged, id });
+
+  return rowToRaidEvent(merged);
 }
 
 export function insertCustomEvent(db: Database.Database, input: CreateCustomEventInput): RaidEvent {

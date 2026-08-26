@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-e3096d91-7b26-4600-8cb0-ac98c06c66bf/styles.css">
+  <script src="_ds/nocturne-e3096d91-7b26-4600-8cb0-ac98c06c66bf/_ds_bundle.js"></script>
+  <style>
+    body{margin:0;background:var(--color-bg);font-family:var(--font-body);}
+    .rc-in{box-sizing:border-box;width:100%;height:32px;padding:0 8px;border-radius:var(--radius-sm);border:1px solid var(--color-neutral-700);background:var(--color-neutral-900);color:var(--color-text);font:400 12.5px var(--font-body);color-scheme:dark;outline:none}
+    .rc-in:focus-visible{outline:2px solid var(--color-accent);outline-offset:1px}
+    .rc-in::placeholder{color:var(--color-neutral-500)}
+    .rc-lb{font:500 10.5px var(--font-body);letter-spacing:.05em;text-transform:uppercase;color:var(--color-neutral-400)}
+  </style>
+</helmet>
+<div style="min-height:100vh;background:var(--color-bg);color:var(--color-text);padding:var(--space-6);display:flex;flex-direction:column;gap:var(--space-4);box-sizing:border-box;max-width:1600px;margin:0 auto;">
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:var(--space-4);">
+    <div style="display:flex;flex-direction:column;gap:2px;">
+      <div style="font:500 22px/1.2 var(--font-heading);color:var(--color-text);">Raid Calendar</div>
+      <div style="font:400 13px var(--font-body);color:var(--color-neutral-300);">{{ rangeLabel }}</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:var(--space-3);">
+      <div style="display:flex;gap:var(--space-2);">
+        <button style="width:36px;height:36px;border-radius:var(--radius-md);border:1px solid var(--color-neutral-700);background:var(--color-neutral-800);color:var(--color-text);font-size:16px;cursor:pointer;" style-hover="background:var(--color-neutral-700);" onClick="{{ goPrev }}">‹</button>
+        <button style="width:36px;height:36px;border-radius:var(--radius-md);border:1px solid var(--color-neutral-700);background:var(--color-neutral-800);color:var(--color-text);font-size:16px;cursor:pointer;" style-hover="background:var(--color-neutral-700);" onClick="{{ goNext }}">›</button>
+      </div>
+      <button style="height:36px;padding:0 var(--space-4);border-radius:var(--radius-md);border:1px solid var(--color-accent-600);background:transparent;color:var(--color-text);font:500 13px var(--font-body);cursor:pointer;" style-hover="background:var(--color-accent-800);" onClick="{{ goToday }}">Today</button>
+    </div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:58px repeat(7,minmax(0,1fr));border-top:1px solid var(--color-neutral-700);border-left:1px solid var(--color-neutral-700);border-radius:var(--radius-md) var(--radius-md) 0 0;overflow:hidden;">
+    <div style="box-sizing:border-box;border-right:1px solid var(--color-neutral-700);border-bottom:1px solid var(--color-neutral-700);background:var(--color-neutral-900);"></div>
+    <sc-for list="{{ weekdayLabels }}" as="wd" hint-placeholder-count="7">
+      <div style="box-sizing:border-box;padding:10px 12px;font:500 11px var(--font-body);letter-spacing:0.04em;text-transform:uppercase;color:var(--color-neutral-400);border-right:1px solid var(--color-neutral-700);border-bottom:1px solid var(--color-neutral-700);background:var(--color-neutral-900);">{{ wd }}</div>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;flex-direction:column;border-left:1px solid var(--color-neutral-700);border-radius:0 0 var(--radius-md) var(--radius-md);overflow:hidden;margin-top:calc(-1 * var(--space-4));">
+    <sc-for list="{{ rows }}" as="row" hint-placeholder-count="3">
+      <div style="display:grid;grid-template-columns:58px repeat(7,minmax(0,1fr));">
+
+        <div style="position:relative;box-sizing:border-box;height:{{ row.height }};border-right:1px solid var(--color-neutral-700);border-bottom:1px solid var(--color-neutral-700);background:var(--color-neutral-900);">
+          <sc-for list="{{ row.hours }}" as="h" hint-placeholder-count="10">
+            <span style="position:absolute;right:8px;top:{{ h.top }};transform:translateY(-50%);font:400 10.5px var(--font-body);color:var(--color-neutral-400);white-space:nowrap;">{{ h.label }}</span>
+          </sc-for>
+        </div>
+
+        <sc-for list="{{ row.days }}" as="day" hint-placeholder-count="7">
+          <div style="position:relative;box-sizing:border-box;height:{{ row.height }};border-right:1px solid var(--color-neutral-700);border-bottom:1px solid var(--color-neutral-700);background:{{ day.bg }};box-shadow:{{ day.glow }};overflow:hidden;" onMouseEnter="{{ day.onEnter }}" onMouseLeave="{{ day.onLeave }}" onContextMenu="{{ day.onContextMenu }}">
+
+            <sc-for list="{{ row.hours }}" as="h" hint-placeholder-count="10">
+              <div style="position:absolute;left:0;right:0;top:{{ h.top }};height:1px;background:var(--color-neutral-800);"></div>
+            </sc-for>
+
+            <div style="position:absolute;top:4px;left:6px;font:500 11.5px var(--font-body);color:{{ day.numColor }};z-index:1;">{{ day.label }}</div>
+
+            <sc-for list="{{ day.events }}" as="ev" hint-placeholder-count="1">
+              <div style="position:absolute;top:{{ ev.top }};height:{{ ev.height }};left:{{ ev.left }};width:{{ ev.width }};box-sizing:border-box;cursor:pointer;border-radius:var(--radius-sm);padding:4px 6px;border:{{ ev.border }};background:{{ ev.bg }};display:flex;flex-direction:column;gap:1px;overflow:hidden;z-index:2;" onClick="{{ ev.onClick }}">
+                <div style="display:flex;align-items:center;gap:5px;min-width:0;">
+                  <span style="width:14px;height:14px;border-radius:3px;background:{{ ev.badgeBg }};color:{{ ev.badgeColor }};font:600 8.5px var(--font-body);display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ ev.initial }}</span>
+                  <span style="font:500 11px var(--font-body);color:{{ ev.textColor }};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ev.raidName }}</span>
+                </div>
+                <span style="font:400 10px var(--font-body);color:var(--color-neutral-300);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ ev.time }} · {{ ev.character }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ selectedEvent }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:50;" onClick="{{ closeDialog }}">
+      <div style="width:340px;background:var(--color-neutral-800);border:1px solid var(--color-neutral-700);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-4);" onClick="{{ stopProp }}">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;">
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <span style="font:500 16px var(--font-heading);color:var(--color-text);">{{ selectedEvent.raidName }}</span>
+            <span style="font:400 12px var(--font-body);color:var(--color-neutral-300);">{{ selectedEvent.dateLabel }} · {{ selectedEvent.time }}</span>
+          </div>
+          <button style="width:28px;height:28px;border-radius:var(--radius-sm);border:1px solid var(--color-neutral-700);background:transparent;color:var(--color-neutral-300);cursor:pointer;" onClick="{{ closeDialog }}">×</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:var(--space-3);border-radius:var(--radius-md);border:{{ selectedEvent.border }};background:{{ selectedEvent.bg }};">
+          <span style="width:28px;height:28px;border-radius:6px;background:{{ selectedEvent.badgeBg }};color:{{ selectedEvent.badgeColor }};font:600 12px var(--font-body);display:flex;align-items:center;justify-content:center;flex-shrink:0;">{{ selectedEvent.initial }}</span>
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font:500 13px var(--font-body);color:var(--color-text);">{{ selectedEvent.character }} · {{ selectedEvent.className }}</span>
+            <span style="font:400 12px var(--font-body);color:var(--color-neutral-300);">{{ selectedEvent.statusLabel }}</span>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;font:400 12.5px var(--font-body);color:var(--color-neutral-300);">
+          <span>Difficulty: {{ selectedEvent.difficulty }}</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ composer }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:60;" onClick="{{ closeComposer }}" onContextMenu="{{ blockMenu }}">
+      <div style="position:absolute;left:{{ composer.left }};top:{{ composer.top }};width:312px;background:var(--color-neutral-800);border:1px solid var(--color-neutral-700);border-radius:var(--radius-lg);box-shadow:var(--shadow-lg);display:flex;flex-direction:column;" onClick="{{ stopProp }}">
+
+        <div style="padding:var(--space-3) var(--space-4);display:flex;align-items:flex-start;justify-content:space-between;gap:var(--space-3);border-bottom:1px solid var(--color-neutral-700);">
+          <div style="display:flex;flex-direction:column;gap:2px;">
+            <span style="font:500 13.5px var(--font-heading);color:var(--color-text);">New event</span>
+            <span style="font:400 11.5px var(--font-body);color:var(--color-neutral-300);">{{ composer.dateLabel }}</span>
+          </div>
+          <button style="width:24px;height:24px;border-radius:var(--radius-sm);border:1px solid var(--color-neutral-700);background:transparent;color:var(--color-neutral-300);font-size:13px;line-height:1;cursor:pointer;flex-shrink:0;" style-hover="background:var(--color-neutral-700);color:var(--color-text);" onClick="{{ closeComposer }}">×</button>
+        </div>
+
+        <div style="padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);">
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <span class="rc-lb">Title</span>
+            <input class="rc-in" type="text" placeholder="Nerub-ar Palace" value="{{ composer.title }}" onChange="{{ setTitle }}" autoFocus="{{ true }}" />
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <span class="rc-lb">Start</span>
+              <input class="rc-in" type="time" value="{{ composer.start }}" onChange="{{ setStart }}" />
+            </div>
+            <div style="display:flex;flex-direction:column;gap:5px;">
+              <span class="rc-lb">End</span>
+              <input class="rc-in" type="time" value="{{ composer.end }}" onChange="{{ setEnd }}" />
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <span class="rc-lb">Character</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:8px;height:8px;border-radius:2px;flex-shrink:0;background:{{ composer.color }};"></span>
+              <input class="rc-in" type="text" placeholder="Character name" value="{{ composer.character }}" onChange="{{ setCharacter }}" />
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:5px;">
+            <span class="rc-lb">Class</span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="width:8px;height:8px;border-radius:2px;flex-shrink:0;background:{{ composer.color }};"></span>
+              <select class="rc-in" value="{{ composer.cls }}" onChange="{{ setClass }}" style="flex:1;">
+                <sc-for list="{{ classOptions }}" as="c" hint-placeholder-count="13">
+                  <option value="{{ c.name }}">{{ c.name }}</option>
+                </sc-for>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:6px;font:400 11px var(--font-body);color:var(--color-neutral-400);">
+            <span style="width:5px;height:5px;border-radius:50%;background:var(--color-neutral-600);"></span>
+            <span>One-time event</span>
+          </div>
+        </div>
+
+        <div style="padding:var(--space-3) var(--space-4);border-top:1px solid var(--color-neutral-700);display:flex;justify-content:flex-end;gap:var(--space-2);">
+          <button style="height:30px;padding:0 var(--space-3);border-radius:var(--radius-sm);border:1px solid var(--color-neutral-700);background:transparent;color:var(--color-neutral-200);font:500 12px var(--font-body);cursor:pointer;" style-hover="background:var(--color-neutral-700);color:var(--color-text);" onClick="{{ closeComposer }}">Cancel</button>
+          <button style="height:30px;padding:0 var(--space-4);border-radius:var(--radius-sm);border:1px solid var(--color-accent-600);background:{{ composer.saveBg }};color:{{ composer.saveColor }};font:500 12px var(--font-body);cursor:{{ composer.saveCursor }};opacity:{{ composer.saveOpacity }};" style-hover="background:var(--color-accent-800);" onClick="{{ createEvent }}" disabled="{{ composer.saveDisabled }}">Add event</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const CLASS_COLORS = {
+  Hunter: '#AAD372',
+  Druid: '#FF7C0A',
+  Warrior: '#C69B6D',
+  Shaman: '#0070DD',
+};
+
+const PX_PER_HOUR = 30;
+const PAD_TOP = 16;
+const DEFAULT_START_H = 14;
+const DEFAULT_END_H = 24;
+
+function pad(n) { return n < 10 ? '0' + n : '' + n; }
+function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+function startOfWeekSunday(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  x.setDate(x.getDate() - x.getDay());
+  return x;
+}
+function lockoutStart(d) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  const diff = (x.getDay() - 2 + 7) % 7;
+  x.setDate(x.getDate() - diff);
+  return x;
+}
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const WEEKDAY = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+const EVENT_SEED = [
+  { offset: 1, character: 'Thrashclaw', class: 'Druid', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:00', difficulty: 'Heroic', status: 'confirmed' },
+  { offset: 1, character: 'Windrunner', class: 'Hunter', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:00', difficulty: 'Heroic', status: 'confirmed' },
+  { offset: 3, character: 'Ironhide', class: 'Warrior', raidName: 'Liberation of Undermine', start: '19:30', end: '22:30', difficulty: 'Normal', status: 'tentative' },
+  { offset: 5, character: 'Stormcaller', class: 'Shaman', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:30', difficulty: 'Mythic', status: 'confirmed' },
+  { offset: 5, character: 'Thrashclaw', class: 'Druid', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:30', difficulty: 'Mythic', status: 'confirmed' },
+  { offset: 8, character: 'Windrunner', class: 'Hunter', raidName: 'Liberation of Undermine', start: '19:00', end: '22:00', difficulty: 'Heroic', status: 'tentative' },
+  { offset: 10, character: 'Ironhide', class: 'Warrior', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:00', difficulty: 'Heroic', status: 'confirmed' },
+  { offset: 11, character: 'Thrashclaw', class: 'Druid', raidName: 'Timewalking Run', start: '11:00', end: '13:00', difficulty: 'Normal', status: 'tentative' },
+  { offset: 12, character: 'Stormcaller', class: 'Shaman', raidName: 'Vault Farm Night', start: '19:00', end: '21:00', difficulty: 'Normal', status: 'tentative' },
+  { offset: 15, character: 'Thrashclaw', class: 'Druid', raidName: 'Liberation of Undermine', start: '19:30', end: '22:30', difficulty: 'Mythic', status: 'confirmed' },
+  { offset: 17, character: 'Windrunner', class: 'Hunter', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:00', difficulty: 'Heroic', status: 'confirmed' },
+  { offset: 17, character: 'Ironhide', class: 'Warrior', raidName: 'Nerub-ar Palace', start: '20:00', end: '23:00', difficulty: 'Heroic', status: 'tentative' },
+  { offset: 19, character: 'Stormcaller', class: 'Shaman', raidName: 'Liberation of Undermine', start: '19:30', end: '22:30', difficulty: 'Normal', status: 'confirmed' },
+];
+
+const ALL_CLASSES = [
+  ['Death Knight', '#C41E3A'], ['Demon Hunter', '#A330C9'], ['Druid', '#FF7C0A'],
+  ['Evoker', '#33937F'], ['Hunter', '#AAD372'], ['Mage', '#3FC7EB'],
+  ['Monk', '#00FF98'], ['Paladin', '#F48CBA'], ['Priest', '#E9E9ED'],
+  ['Rogue', '#FFF468'], ['Shaman', '#0070DD'], ['Warlock', '#8788EE'],
+  ['Warrior', '#C69B6D'],
+];
+
+function toMin(v) {
+  if (!v) return null;
+  const p = v.split(':');
+  return parseInt(p[0], 10) * 60 + parseInt(p[1] || '0', 10);
+}
+function fmtMin(m) {
+  let h = Math.floor(m / 60) % 24;
+  const mm = pad(m % 60);
+  const ap = Math.floor(m / 60) >= 12 && Math.floor(m / 60) < 24 ? 'PM' : 'AM';
+  let hh = h % 12; if (hh === 0) hh = 12;
+  return hh + ':' + mm + ' ' + ap;
+}
+function hourLabel(h) {
+  const hh = h % 24;
+  if (hh === 0) return '12 AM';
+  if (hh === 12) return '12 PM';
+  return (hh % 12) + (hh < 12 ? ' AM' : ' PM');
+}
+
+class Component extends DCLogic {
+  state = {
+    anchor: startOfWeekSunday(new Date(2026, 7, 17)),
+    selectedEvent: null,
+    hoverLockoutKey: null,
+    composer: null,
+    custom: [],
+  };
+
+  componentDidMount() {
+    this._esc = (e) => {
+      if (e.key !== 'Escape') return;
+      if (this.state.composer) this.closeComposer();
+      else if (this.state.selectedEvent) this.closeDialog();
+    };
+    window.addEventListener('keydown', this._esc);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._esc); }
+
+  openComposer = (e, day) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const x = Math.max(8, Math.min(e.clientX, window.innerWidth - 320));
+    const y = Math.max(8, Math.min(e.clientY, Math.max(8, window.innerHeight - 500)));
+    this.setState({
+      selectedEvent: null,
+      composer: {
+        key: day.key, dateLabel: day.longLabel, x, y,
+        title: '', start: '20:00', end: '23:00', character: '', cls: 'Druid',
+      },
+    });
+  };
+  closeComposer = () => this.setState({ composer: null });
+  blockMenu = (e) => { e.preventDefault(); this.closeComposer(); };
+  setField = (name) => (e) => {
+    const v = e.target.value;
+    this.setState(s => ({ composer: Object.assign({}, s.composer, { [name]: v }) }));
+  };
+  setClass = (e) => this.setState(s => ({ composer: Object.assign({}, s.composer, { cls: e.target.value }) }));
+  createEvent = () => {
+    const c = this.state.composer;
+    if (!c || !c.title.trim()) return;
+    this.setState(s => ({
+      custom: s.custom.concat([{
+        key: c.key, title: c.title.trim(), start: c.start, end: c.end,
+        character: c.character.trim() || '—', cls: c.cls, dateLabel: c.dateLabel,
+      }]),
+      composer: null,
+    }));
+  };
+
+  goPrev = () => this.setState(s => { const d = new Date(s.anchor); d.setDate(d.getDate() - 7); return { anchor: d }; });
+  goNext = () => this.setState(s => { const d = new Date(s.anchor); d.setDate(d.getDate() + 7); return { anchor: d }; });
+  goToday = () => this.setState({ anchor: startOfWeekSunday(new Date()) });
+  closeDialog = () => this.setState({ selectedEvent: null });
+  stopProp = (e) => e.stopPropagation();
+  setHoverWeek = (key) => this.setState({ hoverLockoutKey: key });
+  clearHoverWeek = () => this.setState({ hoverLockoutKey: null });
+
+  styleFor(color, status) {
+    if (status === 'confirmed') {
+      return {
+        border: `1px solid ${color}`,
+        bg: `color-mix(in srgb, ${color} 30%, var(--color-neutral-800))`,
+        textColor: 'var(--color-text)',
+        badgeBg: color,
+        badgeColor: '#161826',
+      };
+    }
+    return {
+      border: `1px solid color-mix(in srgb, ${color} 60%, transparent)`,
+      bg: `repeating-linear-gradient(45deg, color-mix(in srgb, ${color} 26%, transparent) 0 5px, transparent 5px 10px), var(--color-neutral-800)`,
+      textColor: 'var(--color-neutral-100)',
+      badgeBg: `color-mix(in srgb, ${color} 45%, var(--color-neutral-800))`,
+      badgeColor: color,
+    };
+  }
+
+  // side-by-side lanes for overlapping events within one day
+  layout(list, startMin, endMin) {
+    const sorted = list.slice().sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+    const clusters = [];
+    let cur = [];
+    let curEnd = -1;
+    sorted.forEach(ev => {
+      if (cur.length && ev.startMin >= curEnd) { clusters.push(cur); cur = []; curEnd = -1; }
+      cur.push(ev);
+      curEnd = Math.max(curEnd, ev.endMin);
+    });
+    if (cur.length) clusters.push(cur);
+
+    const out = [];
+    clusters.forEach(group => {
+      const n = group.length;
+      group.forEach((ev, i) => {
+        const top = PAD_TOP + ((ev.startMin - startMin) / 60) * PX_PER_HOUR;
+        const h = Math.max(22, ((Math.min(ev.endMin, endMin) - ev.startMin) / 60) * PX_PER_HOUR);
+        out.push(Object.assign({}, ev, {
+          top: (top + 1) + 'px',
+          height: (h - 3) + 'px',
+          left: `calc(3px + ${(i / n) * 100}% )`,
+          width: `calc(${100 / n}% - 6px)`,
+        }));
+      });
+    });
+    return out;
+  }
+
+  renderVals() {
+    const anchor = this.state.anchor;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const colorOf = (name) => (ALL_CLASSES.find(c => c[0] === name) || ['', '#9184d9'])[1];
+    const eventsByDay = {};
+
+    const push = (key, ev) => { (eventsByDay[key] = eventsByDay[key] || []).push(ev); };
+
+    EVENT_SEED.forEach((seed, i) => {
+      const d = new Date(anchor); d.setDate(d.getDate() + seed.offset);
+      const color = CLASS_COLORS[seed.class];
+      const s = this.styleFor(color, seed.status);
+      const sm = toMin(seed.start), em = toMin(seed.end);
+      const ev = {
+        id: 'ev' + i,
+        startMin: sm, endMin: em,
+        character: seed.character,
+        className: seed.class,
+        raidName: seed.raidName,
+        time: fmtMin(sm) + ' – ' + fmtMin(em),
+        difficulty: seed.difficulty,
+        statusLabel: seed.status === 'confirmed' ? 'Roster confirmed' : 'Signed up',
+        dateLabel: `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`,
+        initial: seed.class[0],
+        border: s.border, bg: s.bg, textColor: s.textColor,
+        badgeBg: s.badgeBg, badgeColor: s.badgeColor,
+      };
+      ev.onClick = () => this.setState({ selectedEvent: ev });
+      push(dateKey(d), ev);
+    });
+
+    this.state.custom.forEach((c, i) => {
+      const color = colorOf(c.cls);
+      const s = this.styleFor(color, 'confirmed');
+      const sm = toMin(c.start);
+      const em = Math.max(toMin(c.end) || sm + 120, sm + 30);
+      const ev = {
+        id: 'cu' + i,
+        startMin: sm, endMin: em,
+        character: c.character,
+        className: c.cls,
+        raidName: c.title,
+        time: fmtMin(sm) + ' – ' + fmtMin(em),
+        difficulty: 'Not set',
+        statusLabel: 'One-time event',
+        dateLabel: c.dateLabel || c.key,
+        initial: c.cls[0],
+        border: s.border, bg: s.bg, textColor: s.textColor,
+        badgeBg: s.badgeBg, badgeColor: s.badgeColor,
+      };
+      ev.onClick = () => this.setState({ selectedEvent: ev });
+      push(c.key, ev);
+    });
+
+    const currentWeekKey = dateKey(lockoutStart(today));
+    const activeKey = this.state.hoverLockoutKey || currentWeekKey;
+
+    const rows = [];
+    for (let w = 0; w < 3; w++) {
+      // row window: default 2 PM – 12 AM, widened only for this row's events
+      let startH = DEFAULT_START_H, endH = DEFAULT_END_H;
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(anchor); d.setDate(d.getDate() + w * 7 + i);
+        (eventsByDay[dateKey(d)] || []).forEach(ev => {
+          startH = Math.min(startH, Math.floor(ev.startMin / 60));
+          endH = Math.max(endH, Math.ceil(ev.endMin / 60));
+        });
+      }
+      const startMin = startH * 60, endMin = endH * 60;
+      const hours = [];
+      for (let h = startH; h <= endH; h++) {
+        hours.push({ label: hourLabel(h), top: PAD_TOP + (((h * 60) - startMin) / 60) * PX_PER_HOUR + 'px' });
+      }
+
+      const daysArr = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(anchor); d.setDate(d.getDate() + w * 7 + i);
+        const key = dateKey(d);
+        const isToday = key === dateKey(today);
+        const weekKey = dateKey(lockoutStart(d));
+        const highlighted = weekKey === activeKey;
+        const dayMeta = { key, longLabel: `${WEEKDAY[d.getDay()]}, ${MONTH_NAMES[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}` };
+        daysArr.push({
+          key,
+          onContextMenu: (e) => this.openComposer(e, dayMeta),
+          label: d.getDate() === 1 ? `${MONTH_NAMES[d.getMonth()].slice(0, 3)} ${d.getDate()}` : `${d.getDate()}`,
+          numColor: isToday ? 'var(--color-accent-300)' : 'var(--color-neutral-400)',
+          bg: highlighted
+            ? 'color-mix(in oklch, var(--color-accent-500) 9%, var(--color-neutral-900))'
+            : 'var(--color-neutral-900)',
+          glow: highlighted ? 'inset 0 1px 0 0 var(--color-accent-600)' : 'none',
+          events: this.layout(eventsByDay[key] || [], startMin, endMin),
+        });
+      }
+      rows.push({
+        height: (endH - startH) * PX_PER_HOUR + PAD_TOP + 10 + 'px',
+        hours,
+        days: daysArr,
+      });
+    }
+
+    // hover handlers per row (whole row shares a lockout week for Sun-start weeks split by Tuesday reset)
+    rows.forEach(r => r.days.forEach(day => {
+      day.onEnter = () => this.setHoverWeek(dateKey(lockoutStart(new Date(day.key + 'T00:00:00'))));
+      day.onLeave = this.clearHoverWeek;
+    }));
+
+    const endDate = new Date(anchor); endDate.setDate(endDate.getDate() + 20);
+    const rangeLabel = `${MONTH_NAMES[anchor.getMonth()]} ${anchor.getDate()} – ${MONTH_NAMES[endDate.getMonth()]} ${endDate.getDate()}, ${endDate.getFullYear()}`;
+
+    const c = this.state.composer;
+    let composer = null;
+    let classOptions = [];
+    if (c) {
+      const valid = !!c.title.trim();
+      composer = Object.assign({}, c, {
+        left: c.x + 'px',
+        top: c.y + 'px',
+        color: colorOf(c.cls),
+        saveBg: valid ? 'var(--color-accent-800)' : 'transparent',
+        saveColor: valid ? 'var(--color-text)' : 'var(--color-neutral-400)',
+        saveCursor: valid ? 'pointer' : 'not-allowed',
+        saveOpacity: valid ? '1' : '0.5',
+        saveDisabled: !valid,
+      });
+      classOptions = ALL_CLASSES.map(([name]) => ({ name }));
+    }
+
+    return {
+      rows,
+      composer,
+      classOptions,
+      closeComposer: this.closeComposer,
+      blockMenu: this.blockMenu,
+      createEvent: this.createEvent,
+      setTitle: this.setField('title'),
+      setStart: this.setField('start'),
+      setEnd: this.setField('end'),
+      setCharacter: this.setField('character'),
+      setClass: this.setClass,
+      rangeLabel,
+      weekdayLabels: WEEKDAY,
+      selectedEvent: this.state.selectedEvent,
+      closeDialog: this.closeDialog,
+      stopProp: this.stopProp,
+      goPrev: this.goPrev,
+      goNext: this.goNext,
+      goToday: this.goToday,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

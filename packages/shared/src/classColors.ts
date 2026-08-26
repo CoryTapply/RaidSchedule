@@ -10,7 +10,7 @@ export const CLASS_COLORS: Record<WowClass, string> = {
   Mage: '#3FC7EB',
   Monk: '#00FF98',
   Paladin: '#F48CBA',
-  Priest: '#FFFFFF',
+  Priest: '#E9E9ED',
   Rogue: '#FFF468',
   Shaman: '#0070DD',
   Warlock: '#8788EE',

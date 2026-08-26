@@ -101,4 +101,14 @@ describe('layoutDayEvents', () => {
     const [placement] = layoutDayEvents([ev('2026-08-18T20:00:00')], window);
     expect(placement.heightHours).toBe(1);
   });
+
+  it('treats an event whose start and end are equal as a 2-hour block', () => {
+    const [placement] = layoutDayEvents([ev('2026-08-18T20:00:00', '2026-08-18T20:00:00')], window);
+    expect(placement.heightHours).toBe(2);
+  });
+
+  it('treats an event whose end is before its start as a 2-hour block', () => {
+    const [placement] = layoutDayEvents([ev('2026-08-18T20:00:00', '2026-08-18T19:00:00')], window);
+    expect(placement.heightHours).toBe(2);
+  });
 });

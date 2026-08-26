@@ -1,3 +1,4 @@
+import { PageShell } from '../design-system/zerpy/components/index.js';
 import { useEvents } from '../api/useEvents.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { CalendarGrid } from './CalendarGrid.js';
@@ -13,7 +14,7 @@ export function CalendarPage() {
   const state = useCalendarState(events);
 
   return (
-    <div className={styles.root}>
+    <PageShell>
       <div className={styles.content}>
         <CalendarHeader
           rangeStart={state.rangeStart}
@@ -23,40 +24,29 @@ export function CalendarPage() {
           onToday={state.goToday}
         />
         {error && (
-          <div style={{ color: '#ff8787', fontSize: 13 }} role="alert">
+          <span className={styles.caption} style={{ color: 'var(--zp-danger-text)' }} role="alert">
             {error}
-          </div>
+          </span>
         )}
         {loading ? (
-          <div style={{ color: 'rgba(214,208,255,.6)', fontSize: 13 }}>Loading…</div>
+          <span className={styles.caption}>Loading…</span>
         ) : (
           <CalendarGrid
             days={state.days}
             onSelectEvent={state.selectEvent}
+            onEditEvent={state.openEditor}
             onEnterDay={state.setHoverWeek}
             onLeaveDay={state.clearHoverWeek}
             onOpenComposer={state.openComposer}
           />
         )}
+        <span className={styles.caption}>Right-click any day to schedule a raid. The highlighted band is the current lockout.</span>
         <button type="button" onClick={() => void logout()} className={styles.signOutButton}>
           Sign out
         </button>
       </div>
       {state.selectedEvent && (
-        <EventDetailDialog
-          key={state.selectedEvent.id}
-          event={state.selectedEvent}
-          onClose={state.closeDialog}
-          onDelete={state.deleteSelectedEvent}
-          deleting={state.deletingEvent}
-          deleteError={state.deleteError}
-          onConfirm={state.confirmSelectedEvent}
-          confirming={state.confirmingEvent}
-          confirmError={state.confirmError}
-          onToggleHorde={state.toggleHordeSelectedEvent}
-          togglingHorde={state.togglingHorde}
-          hordeError={state.hordeError}
-        />
+        <EventDetailDialog key={state.selectedEvent.id} event={state.selectedEvent} onClose={state.closeDialog} onEdit={state.openEditor} />
       )}
       {state.composer && (
         <EventComposer
@@ -64,8 +54,9 @@ export function CalendarPage() {
           onChange={state.updateComposer}
           onCancel={state.closeComposer}
           onSave={state.saveComposer}
+          onDelete={state.deleteComposerEvent}
         />
       )}
-    </div>
+    </PageShell>
   );
 }
