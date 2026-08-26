@@ -14,7 +14,7 @@ export function CalendarPage() {
   const state = useCalendarState(events);
 
   return (
-    <PageShell maxWidth={1340}>
+    <PageShell maxWidth={1640}>
       <div className={styles.content}>
         <CalendarHeader
           rangeStart={state.rangeStart}
