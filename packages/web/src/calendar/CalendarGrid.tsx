@@ -24,7 +24,7 @@ export function CalendarGrid({ days, onSelectEvent, onEditEvent, onEnterDay, onL
   const weeks = chunkIntoWeeks(days);
 
   return (
-    <Panel>
+    <Panel padding="0">
       <div className={styles.gridColumns}>
         <div className={styles.headerRow}>
           <div className={styles.gutterCorner} />
