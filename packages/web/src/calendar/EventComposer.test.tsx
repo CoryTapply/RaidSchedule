@@ -173,43 +173,43 @@ describe('EventComposer', () => {
 
   it('shows Confirmed selected by default', () => {
     renderComposer();
-    expect(screen.getByRole('button', { name: 'Confirmed' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Signed up' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('tab', { name: 'Confirmed' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Signed up' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('calls onChange with pending status when Signed up is clicked', async () => {
     const { onChange } = renderComposer();
-    await userEvent.click(screen.getByRole('button', { name: 'Signed up' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Signed up' }));
     expect(onChange).toHaveBeenCalledWith({ status: 'pending' });
   });
 
   it('calls onChange with confirmed status when Confirmed is clicked', async () => {
     const { onChange } = renderComposer({ status: 'pending' });
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmed' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Confirmed' }));
     expect(onChange).toHaveBeenCalledWith({ status: 'confirmed' });
   });
 
   it('shows Alliance selected by default', () => {
     renderComposer();
-    expect(screen.getByRole('button', { name: 'Alliance' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Horde' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByRole('tab', { name: 'Alliance' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Horde' })).toHaveAttribute('aria-selected', 'false');
   });
 
   it('calls onChange with isHorde true when Horde is clicked', async () => {
     const { onChange } = renderComposer();
-    await userEvent.click(screen.getByRole('button', { name: 'Horde' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Horde' }));
     expect(onChange).toHaveBeenCalledWith({ isHorde: true });
   });
 
   it('calls onChange with isHorde false when Alliance is clicked', async () => {
     const { onChange } = renderComposer({ isHorde: true });
-    await userEvent.click(screen.getByRole('button', { name: 'Alliance' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Alliance' }));
     expect(onChange).toHaveBeenCalledWith({ isHorde: false });
   });
 
   it('does not call onSave when Enter is pressed on a status option button', async () => {
     const { onSave } = renderComposer({ title: 'Nerub-ar Palace' });
-    screen.getByRole('button', { name: 'Signed up' }).focus();
+    screen.getByRole('tab', { name: 'Signed up' }).focus();
     await userEvent.keyboard('{Enter}');
     expect(onSave).not.toHaveBeenCalled();
   });

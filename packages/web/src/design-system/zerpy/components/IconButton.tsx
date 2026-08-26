@@ -1,23 +1,14 @@
-import type { ButtonHTMLAttributes } from 'react';
-import styles from './IconButton.module.css';
+import React from 'react';
+import { Button, type ButtonProps } from './Button.js';
 
-export type IconButtonIntent = 'secondary' | 'ghost';
-export type IconButtonSize = 'sm' | 'md' | 'lg';
-
-export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'className'> {
+export interface IconButtonProps extends Omit<ButtonProps, 'icon'> {
   label: string;
-  intent?: IconButtonIntent;
-  size?: IconButtonSize;
 }
 
-const SIZE_CLASS: Partial<Record<IconButtonSize, string>> = {
-  sm: 'zp-sm',
-  lg: 'zp-lg',
-};
-
-export function IconButton({ label, intent = 'secondary', size = 'md', type = 'button', ...props }: IconButtonProps) {
-  const className = ['zp-btn', 'zp-icon', SIZE_CLASS[size], intent === 'ghost' ? styles.ghost : '']
-    .filter(Boolean)
-    .join(' ');
-  return <button type={type} className={className} aria-label={label} {...props} />;
+export function IconButton({ label, size = 'md', intent = 'secondary', children, className = '', ...rest }: IconButtonProps) {
+  return (
+    <Button intent={intent} size={size} aria-label={label} className={['zp-icon', className].filter(Boolean).join(' ')} {...rest}>
+      {children}
+    </Button>
+  );
 }

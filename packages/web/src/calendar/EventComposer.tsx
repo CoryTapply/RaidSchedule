@@ -1,7 +1,8 @@
+import { useLayoutEffect, useRef } from 'react';
 import { WOW_CLASSES, type RosterStatus, type WowClass } from '@raidschedule/shared';
-import { Button, Field, IconButton, Input, Select, SegmentedControl } from '../design-system/zerpy/components/index.js';
+import { Button, Field, IconButton, Input, Select, SegmentedControl, TimeSelect } from '../design-system/zerpy/components/index.js';
 import { classColor } from './classColors.js';
-import type { ComposerState } from './composer.js';
+import { hhmmToTimeValue, timeValueToHHMM, type ComposerState } from './composer.js';
 import styles from '../styles/composer.module.css';
 
 export interface EventComposerProps {
@@ -42,6 +43,23 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
   const fromApi = composer.mode === 'edit-raid-helper';
   const isNew = composer.mode === 'create';
 
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // The panel's height varies with content (mode, save errors, etc.), so the anchor point
+  // computed at click time can't account for it in advance — re-clamp against the actual
+  // rendered size on every render instead, keeping the footer's Save button on screen
+  // without resorting to an internal scrollbar.
+  useLayoutEffect(() => {
+    if (composer.centered) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    const margin = 12;
+    const maxLeft = Math.max(margin, window.innerWidth - panel.offsetWidth - margin);
+    const maxTop = Math.max(margin, window.innerHeight - panel.offsetHeight - margin);
+    panel.style.left = `${Math.min(composer.x, maxLeft)}px`;
+    panel.style.top = `${Math.min(composer.y, maxTop)}px`;
+  });
+
   return (
     <div
       className={`${styles.overlay} ${composer.centered ? styles.overlayCentered : ''}`}
@@ -52,6 +70,7 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
       }}
     >
       <div
+        ref={panelRef}
         className={`${styles.panel} ${composer.centered ? styles.panelCentered : ''}`}
         style={composer.centered ? undefined : { left: composer.x, top: composer.y }}
         onClick={(e) => e.stopPropagation()}
@@ -90,10 +109,26 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
           {timeEditable ? (
             <div className={styles.timeRow}>
               <Field label="Start">
-                <Input aria-label="Start" type="time" value={composer.start} onChange={(e) => onChange({ start: e.target.value })} />
+                <TimeSelect
+                  aria-label="Start"
+                  required
+                  value={hhmmToTimeValue(composer.start)}
+                  onChange={(v) => {
+                    if (v != null) onChange({ start: timeValueToHHMM(v) });
+                  }}
+                />
               </Field>
               <Field label="End">
-                <Input aria-label="End" type="time" value={composer.end} onChange={(e) => onChange({ end: e.target.value })} />
+                <TimeSelect
+                  aria-label="End"
+                  required
+                  relativeTo={hhmmToTimeValue(composer.start)}
+                  align="end"
+                  value={hhmmToTimeValue(composer.end)}
+                  onChange={(v) => {
+                    if (v != null) onChange({ end: timeValueToHHMM(v) });
+                  }}
+                />
               </Field>
             </div>
           ) : (
@@ -137,7 +172,7 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
               <span className={styles.swatch} style={{ background: factionColor }} />
               <div className={styles.swatchField}>
                 <SegmentedControl
-                  ariaLabel="Faction"
+                  aria-label="Faction"
                   options={FACTION_OPTIONS}
                   value={composer.isHorde ? 'Horde' : 'Alliance'}
                   onChange={(v) => onChange({ isHorde: v === 'Horde' })}
@@ -153,7 +188,7 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
               </span>
               <div className={styles.swatchField}>
                 <SegmentedControl
-                  ariaLabel="Status"
+                  aria-label="Status"
                   options={STATUS_OPTIONS}
                   value={statusToLabel(composer.status)}
                   onChange={(v) => onChange({ status: labelToStatus(v) })}

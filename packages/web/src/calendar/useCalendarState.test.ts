@@ -169,7 +169,7 @@ describe('useCalendarState', () => {
 
       act(() => result.current.openComposer(day, { clientX: window.innerWidth, clientY: window.innerHeight }));
       expect(result.current.composer!.x).toBe(window.innerWidth - 348);
-      expect(result.current.composer!.y).toBe(window.innerHeight - 528);
+      expect(result.current.composer!.y).toBe(window.innerHeight);
 
       act(() => result.current.openComposer(day, { clientX: -100, clientY: -100 }));
       expect(result.current.composer!.x).toBe(8);
