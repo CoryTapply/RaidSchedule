@@ -148,7 +148,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
   const setViewMode = useCallback((mode: CalendarViewMode) => {
     setStoredViewMode(mode);
     setViewModeState(mode);
-    setAnchor((d) => alignAnchor(d, mode));
+    setAnchor(alignAnchor(new Date(), mode));
   }, []);
   const toggleShowHiddenEvents = useCallback(() => {
     setShowHiddenEventsState((prev) => {
