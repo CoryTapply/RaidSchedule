@@ -602,4 +602,45 @@ describe('PATCH /api/raid-helper-events/:eventId/override', () => {
       startsAt,
     });
   });
+
+  it('marks a sign-up hidden, and a subsequent GET /api/events reflects it', async () => {
+    const cookie = await loginCookie(app);
+    const nowSeconds = Math.floor(Date.now() / 1000);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify([rawEvent({ id: 'evt1', startTime: nowSeconds + 3600, characterName: 'Thrashclaw' })]),
+          { status: 200 },
+        ),
+      ),
+    );
+
+    const before = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(before.json().events[0].hidden).toBeFalsy();
+    const eventId = before.json().events[0].id as string;
+
+    const patchRes = await app.inject({
+      method: 'PATCH',
+      url: `/api/raid-helper-events/${encodeURIComponent(eventId)}/override`,
+      cookies: { raidschedule_session: cookie },
+      payload: { hidden: true },
+    });
+    expect(patchRes.statusCode).toBe(200);
+    expect(patchRes.json()).toMatchObject({ hidden: true });
+
+    const after = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(after.json().events[0].hidden).toBe(true);
+
+    const unhideRes = await app.inject({
+      method: 'PATCH',
+      url: `/api/raid-helper-events/${encodeURIComponent(eventId)}/override`,
+      cookies: { raidschedule_session: cookie },
+      payload: { hidden: false },
+    });
+    expect(unhideRes.statusCode).toBe(200);
+
+    const afterUnhide = await app.inject({ method: 'GET', url: '/api/events', cookies: { raidschedule_session: cookie } });
+    expect(afterUnhide.json().events[0].hidden).toBe(false);
+  });
 });

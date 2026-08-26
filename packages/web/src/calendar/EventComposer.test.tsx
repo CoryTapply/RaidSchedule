@@ -20,6 +20,7 @@ function makeComposer(overrides: Partial<ComposerState> = {}): ComposerState {
     cls: 'Druid',
     status: 'confirmed',
     isHorde: false,
+    hidden: false,
     saving: false,
     saveError: null,
     ...overrides,

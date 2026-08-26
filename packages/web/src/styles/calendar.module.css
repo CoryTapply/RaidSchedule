@@ -41,6 +41,12 @@
   flex-wrap: wrap;
 }
 
+.viewControls {
+  display: flex;
+  align-items: center;
+  gap: var(--zp-space-3);
+}
+
 .header {
   display: flex;
   align-items: flex-end;

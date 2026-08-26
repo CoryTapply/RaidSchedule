@@ -15,6 +15,7 @@ export interface EventComposerProps {
 
 const STATUS_OPTIONS = ['Confirmed', 'Signed up'] as const;
 const FACTION_OPTIONS = ['Alliance', 'Horde'] as const;
+const VISIBILITY_OPTIONS = ['Visible', 'Hidden'] as const;
 
 function statusToLabel(status: RosterStatus): string {
   return status === 'confirmed' ? 'Confirmed' : 'Signed up';
@@ -196,6 +197,17 @@ export function EventComposer({ composer, onChange, onCancel, onSave, onDelete }
               </div>
             </div>
           </Field>
+
+          {fromApi && (
+            <Field label="Visibility" hint="Hide this from the calendar without deleting it in Raid-Helper.">
+              <SegmentedControl
+                aria-label="Visibility"
+                options={VISIBILITY_OPTIONS}
+                value={composer.hidden ? 'Hidden' : 'Visible'}
+                onChange={(v) => onChange({ hidden: v === 'Hidden' })}
+              />
+            </Field>
+          )}
 
           {composer.saveError && (
             <span className={styles.saveError} role="alert">
