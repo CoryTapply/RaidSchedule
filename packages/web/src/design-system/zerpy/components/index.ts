@@ -8,4 +8,5 @@ export { PageShell, type PageShellProps } from './PageShell.js';
 export { Panel, type PanelProps } from './Panel.js';
 export { SegmentedControl, type SegmentedControlProps, type SegmentOption } from './SegmentedControl.js';
 export { Select, type SelectProps, type SelectOption } from './Select.js';
+export { Skeleton, type SkeletonProps } from './Skeleton.js';
 export { TimeSelect, formatTime, parseTime, type TimeSelectProps, type TimeValue } from './TimeSelect.js';

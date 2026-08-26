@@ -3,6 +3,7 @@ import { useEvents } from '../api/useEvents.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { CalendarGrid } from './CalendarGrid.js';
 import { CalendarHeader } from './CalendarHeader.js';
+import { CalendarSkeleton } from './CalendarSkeleton.js';
 import { EventComposer } from './EventComposer.js';
 import { EventDetailDialog } from './EventDetailDialog.js';
 import { useCalendarState, type CalendarViewMode } from './useCalendarState.js';
@@ -34,7 +35,7 @@ export function CalendarPage() {
           </span>
         )}
         {loading ? (
-          <span className={styles.caption}>Loading…</span>
+          <CalendarSkeleton />
         ) : (
           <CalendarGrid
             days={state.days}
