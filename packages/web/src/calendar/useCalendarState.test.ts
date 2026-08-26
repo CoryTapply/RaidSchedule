@@ -77,18 +77,18 @@ describe('useCalendarState', () => {
     expect(result.current.anchor.getTime()).toBe(lockoutStart(TODAY).getTime());
   });
 
-  it('setViewMode switches between Week and Lockout, re-aligning the anchor to the new mode', () => {
+  it('setViewMode switches between Week and Lockout, resetting the anchor to today in the new mode', () => {
     const { result } = renderHook(() => useCalendarState([]));
     expect(result.current.viewMode).toBe('lockout');
     expect(result.current.anchor.getTime()).toBe(lockoutStart(TODAY).getTime());
 
     act(() => result.current.setViewMode('week'));
     expect(result.current.viewMode).toBe('week');
-    expect(result.current.anchor.getTime()).toBe(startOfWeekSunday(lockoutStart(TODAY)).getTime());
+    expect(result.current.anchor.getTime()).toBe(startOfWeekSunday(TODAY).getTime());
 
     act(() => result.current.setViewMode('lockout'));
     expect(result.current.viewMode).toBe('lockout');
-    expect(result.current.anchor.getTime()).toBe(lockoutStart(startOfWeekSunday(lockoutStart(TODAY))).getTime());
+    expect(result.current.anchor.getTime()).toBe(lockoutStart(TODAY).getTime());
   });
 
   it('goToday re-aligns to the current mode after switching view modes', () => {
