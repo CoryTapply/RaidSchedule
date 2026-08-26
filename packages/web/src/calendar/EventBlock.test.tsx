@@ -99,12 +99,12 @@ describe('EventBlock', () => {
 
     it('reserves room for the Horde mark so the combined line ellipsizes before running under it', () => {
       renderBlock(makePlacement({ isHorde: true }, { heightHours: 1 }));
-      expect(screen.getByText(/Nerub-ar Palace/).className).toMatch(/hordeClearShort/);
+      expect(screen.getByText(/Nerub-ar Palace/).parentElement?.className).toMatch(/hordeClearShort/);
     });
 
     it('does not reserve Horde-mark room when the event isn\'t Horde-tagged', () => {
       renderBlock(makePlacement({ isHorde: false }, { heightHours: 1 }));
-      expect(screen.getByText(/Nerub-ar Palace/).className).not.toMatch(/hordeClearShort/);
+      expect(screen.getByText(/Nerub-ar Palace/).parentElement?.className).not.toMatch(/hordeClearShort/);
     });
 
     it('still shows only the title, with no character at all, when clustered with an overlapping event', () => {

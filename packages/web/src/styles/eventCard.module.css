@@ -105,8 +105,11 @@
    shrink it off the card's own (block-size) height, hence the JS-driven
    modifier class instead of a second clamp() breakpoint. */
 .hordeMarkSmall {
-  width: 16px;
-  height: 16px;
+  width: 30px;
+  height: 30px;
+  top: 0px;
+  bottom: unset;
+  right: 0;
 }
 
 .content {
@@ -117,6 +120,19 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* A 30-minute card is barely taller than the text itself (see .block's
+   24px height clamp) — the standard 4px vertical padding clips the
+   descenders, so tiny cards get a shade less. */
+.contentTight {
+  padding: 3px 6px;
+}
+
+/* A short (but not tiny) card's single combined line has slack below it —
+   center it in the available height instead of hugging the top. */
+.contentCenter {
+  justify-content: center;
 }
 
 .raidName {
@@ -132,6 +148,24 @@
 }
 
 .pending .raidName {
+  color: var(--zp-text-2);
+}
+
+/* The isShort combined "Title · Character" line truncates with a single
+   ellipsis rendered in the box's own color — which, on a narrow card, is
+   usually eating into the character name, not the title. Make the box's
+   base color match the character name's muted tone (so the ellipsis
+   matches it) and give the title its own explicit, brighter override. */
+.confirmed .raidName.raidNameCombined,
+.pending .raidName.raidNameCombined {
+  color: var(--zp-text-4);
+}
+
+.confirmed .raidTitleText {
+  color: var(--zp-text);
+}
+
+.pending .raidTitleText {
   color: var(--zp-text-2);
 }
 

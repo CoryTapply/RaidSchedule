@@ -19,6 +19,7 @@ export function EventBlock({ placement, onSelect, onEdit }: EventBlockProps) {
   // line — collapse it into "Title · Character" on the title's own line
   // instead, and shrink the Horde mark to match.
   const isShort = heightHours <= 1;
+  const isTiny = heightHours <= 0.5;
 
   const style = {
     '--class-color': color,
@@ -52,10 +53,14 @@ export function EventBlock({ placement, onSelect, onEdit }: EventBlockProps) {
         <div className={`${styles.hordeMark} ${isShort ? styles.hordeMarkSmall : ''}`} data-testid="horde-mark" />
       )}
       <div className={styles.rail} />
-      <div className={styles.content}>
+      <div
+        className={`${styles.content} ${isTiny ? styles.contentTight : ''} ${isShort && !isTiny ? styles.contentCenter : ''}`}
+      >
         {showMeta && isShort ? (
-          <span className={`${styles.raidName} ${event.isHorde ? styles.hordeClearShort : ''}`}>
-            {event.raidName}
+          <span
+            className={`${styles.raidName} ${styles.raidNameCombined} ${event.isHorde ? styles.hordeClearShort : ''}`}
+          >
+            <span className={styles.raidTitleText}>{event.raidName}</span>
             <span className={styles.metaInline}> · {event.character.name}</span>
           </span>
         ) : (
