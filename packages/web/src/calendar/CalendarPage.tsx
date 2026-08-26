@@ -1,4 +1,4 @@
-import { PageShell, SegmentedControl } from '../design-system/zerpy/components/index.js';
+import { Button, PageShell, SegmentedControl } from '../design-system/zerpy/components/index.js';
 import { useEvents } from '../api/useEvents.js';
 import { useAuth } from '../auth/AuthProvider.js';
 import { CalendarGrid } from './CalendarGrid.js';
@@ -48,12 +48,21 @@ export function CalendarPage() {
         )}
         <div className={styles.footerRow}>
           <span className={styles.caption}>Right-click any day to schedule a raid. The highlighted band is the current lockout.</span>
-          <SegmentedControl
-            aria-label="Calendar view"
-            options={VIEW_MODE_OPTIONS}
-            value={state.viewMode}
-            onChange={(v) => state.setViewMode(v as CalendarViewMode)}
-          />
+          <div className={styles.viewControls}>
+            <Button
+              intent={state.showHiddenEvents ? 'primary' : 'ghost'}
+              size="sm"
+              onClick={state.toggleShowHiddenEvents}
+            >
+              {state.showHiddenEvents ? 'Hide Hidden Events' : 'Show Hidden Events'}
+            </Button>
+            <SegmentedControl
+              aria-label="Calendar view"
+              options={VIEW_MODE_OPTIONS}
+              value={state.viewMode}
+              onChange={(v) => state.setViewMode(v as CalendarViewMode)}
+            />
+          </div>
         </div>
         <button type="button" onClick={() => void logout()} className={styles.signOutButton}>
           Sign out

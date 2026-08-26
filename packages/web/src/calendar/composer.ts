@@ -25,6 +25,8 @@ export interface ComposerState {
   cls: WowClass;
   status: RosterStatus;
   isHorde: boolean;
+  /** Only meaningful in edit-raid-helper mode — hides this sign-up from the calendar until revealed via the footer's "Show Hidden Events" toggle. */
+  hidden: boolean;
   saving: boolean;
   saveError: string | null;
 }

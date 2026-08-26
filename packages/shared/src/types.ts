@@ -49,6 +49,14 @@ export interface RaidEvent {
    * without caring about it (tests, seed data) don't have to.
    */
   isHorde?: boolean;
+  /**
+   * Whether this event is hidden from the calendar by default. Only ever set
+   * for `source: 'raid-helper'` events — custom events are hard-deleted
+   * instead. Set via the same per-sign-up local override as the identity
+   * fields below; a footer toggle can reveal hidden events without changing
+   * this flag.
+   */
+  hidden?: boolean;
 }
 
 export interface EventsResponse {
@@ -82,4 +90,5 @@ export interface RaidHelperEventOverrideInput {
   character?: Pick<CharacterSignup, 'name' | 'className'>;
   status?: RosterStatus;
   isHorde?: boolean;
+  hidden?: boolean;
 }

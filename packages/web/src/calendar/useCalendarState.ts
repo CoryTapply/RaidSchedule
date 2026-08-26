@@ -54,6 +54,26 @@ function setStoredViewMode(mode: CalendarViewMode): void {
   }
 }
 
+const SHOW_HIDDEN_EVENTS_STORAGE_KEY = 'raidschedule.calendar.showHiddenEvents';
+
+/** Whether hidden events were being revealed in a previous session, if known. */
+function getStoredShowHiddenEvents(): boolean | null {
+  try {
+    const value = localStorage.getItem(SHOW_HIDDEN_EVENTS_STORAGE_KEY);
+    return value === null ? null : value === 'true';
+  } catch {
+    return null;
+  }
+}
+
+function setStoredShowHiddenEvents(show: boolean): void {
+  try {
+    localStorage.setItem(SHOW_HIDDEN_EVENTS_STORAGE_KEY, String(show));
+  } catch {
+    // Storage can be unavailable — the toggle still works, it just won't remember the pick.
+  }
+}
+
 /** The start-of-row date for a given view mode: the Sunday on/before `d` for Week, the Tuesday on/before `d` (lockout reset) for Lockout. */
 function alignAnchor(d: Date, mode: CalendarViewMode): Date {
   return mode === 'week' ? startOfWeekSunday(d) : lockoutStart(d);
@@ -63,6 +83,7 @@ interface IdentityOverride {
   raidName?: string;
   character?: CharacterSignup;
   status?: RosterStatus;
+  hidden?: boolean;
 }
 
 export interface CalendarState {
@@ -74,6 +95,8 @@ export interface CalendarState {
   composer: ComposerState | null;
   viewMode: CalendarViewMode;
   setViewMode: (mode: CalendarViewMode) => void;
+  showHiddenEvents: boolean;
+  toggleShowHiddenEvents: () => void;
   goPrev: () => void;
   goNext: () => void;
   goToday: () => void;
@@ -117,6 +140,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
   const [hordeOverrides, setHordeOverrides] = useState<ReadonlyMap<string, boolean>>(new Map());
   /** Local identity-edit echo for Raid-Helper events, keyed by the specific sign-up's full RaidEvent id. */
   const [identityOverrides, setIdentityOverrides] = useState<ReadonlyMap<string, IdentityOverride>>(new Map());
+  const [showHiddenEvents, setShowHiddenEventsState] = useState<boolean>(() => getStoredShowHiddenEvents() ?? false);
 
   const goPrev = useCallback(() => setAnchor((d) => addDays(d, -7)), []);
   const goNext = useCallback(() => setAnchor((d) => addDays(d, 7)), []);
@@ -125,6 +149,13 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     setStoredViewMode(mode);
     setViewModeState(mode);
     setAnchor((d) => alignAnchor(d, mode));
+  }, []);
+  const toggleShowHiddenEvents = useCallback(() => {
+    setShowHiddenEventsState((prev) => {
+      const next = !prev;
+      setStoredShowHiddenEvents(next);
+      return next;
+    });
   }, []);
   const selectEvent = useCallback((event: RaidEvent) => setSelectedEvent(event), []);
   const closeDialog = useCallback(() => setSelectedEvent(null), []);
@@ -149,6 +180,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
       cls: getStoredClass() ?? 'Druid',
       status: 'confirmed',
       isHorde: false,
+      hidden: false,
       saving: false,
       saveError: null,
     });
@@ -176,6 +208,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
       cls,
       status: event.status,
       isHorde: Boolean(event.isHorde),
+      hidden: Boolean(event.hidden),
       saving: false,
       saveError: null,
     });
@@ -222,8 +255,11 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
           character,
           status: composer.status,
           isHorde: composer.isHorde,
+          hidden: composer.hidden,
         });
-        setIdentityOverrides((prev) => new Map(prev).set(eventId, { raidName: composer.title.trim(), character, status: composer.status }));
+        setIdentityOverrides((prev) =>
+          new Map(prev).set(eventId, { raidName: composer.title.trim(), character, status: composer.status, hidden: composer.hidden }),
+        );
         setHordeOverrides((prev) => new Map(prev).set(raidHelperEventId, composer.isHorde));
       }
       setComposer(null);
@@ -282,10 +318,12 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
             raidName: identity.raidName ?? merged.raidName,
             status: identity.status ?? merged.status,
             character: identity.character ?? merged.character,
+            hidden: identity.hidden ?? merged.hidden,
           };
         }
         return merged;
-      });
+      })
+      .filter((e) => showHiddenEvents || !e.hidden);
     const eventsByDay = groupEventsByDateKey(withOverrides);
 
     return buildWindow(anchor, 21).map((date): CalendarDay => {
@@ -302,7 +340,7 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
         lockoutWeekKey,
       };
     });
-  }, [anchor, events, custom, customEdits, deletedIds, hordeOverrides, identityOverrides, hoverLockoutKey]);
+  }, [anchor, events, custom, customEdits, deletedIds, hordeOverrides, identityOverrides, hoverLockoutKey, showHiddenEvents]);
 
   const rangeEnd = useMemo(() => addDays(anchor, 20), [anchor]);
 
@@ -315,6 +353,8 @@ export function useCalendarState(events: RaidEvent[]): CalendarState {
     composer,
     viewMode,
     setViewMode,
+    showHiddenEvents,
+    toggleShowHiddenEvents,
     goPrev,
     goNext,
     goToday,

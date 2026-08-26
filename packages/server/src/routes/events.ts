@@ -55,6 +55,7 @@ const raidHelperOverrideSchema = z.object({
   character: characterPatchSchema.optional(),
   status: z.enum(['pending', 'confirmed']).optional(),
   isHorde: z.boolean().optional(),
+  hidden: z.boolean().optional(),
 });
 
 const RAID_HELPER_EVENT_ID_PATTERN = /^raid-helper:([^:]+):[^:]+$/;
@@ -137,13 +138,13 @@ export function registerEventRoutes(fastify: FastifyInstance, raidHelperApiKey: 
     if (!body.success) {
       return reply.code(400).send({ error: 'invalid_request' });
     }
-    const { raidName, character, status, isHorde } = body.data;
+    const { raidName, character, status, isHorde, hidden } = body.data;
     if (isHorde !== undefined) {
       setHordeTag(db, raidHelperEventId, isHorde);
     }
-    if (raidName !== undefined || character !== undefined || status !== undefined) {
-      setRaidHelperOverride(db, eventId, { raidName, characterName: character?.name, characterClassName: character?.className, status });
+    if (raidName !== undefined || character !== undefined || status !== undefined || hidden !== undefined) {
+      setRaidHelperOverride(db, eventId, { raidName, characterName: character?.name, characterClassName: character?.className, status, hidden });
     }
-    return reply.send({ eventId, raidHelperEventId, raidName, character, status, isHorde });
+    return reply.send({ eventId, raidHelperEventId, raidName, character, status, isHorde, hidden });
   });
 }

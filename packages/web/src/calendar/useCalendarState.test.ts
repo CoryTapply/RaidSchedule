@@ -99,6 +99,42 @@ describe('useCalendarState', () => {
     expect(result.current.anchor.getTime()).toBe(startOfWeekSunday(TODAY).getTime());
   });
 
+  it('shows Raid-Helper events by default; a per-event hidden flag hides just that one until revealed via showHiddenEvents', () => {
+    const visibleRaidHelperEvent: RaidEvent = {
+      id: 'raid-helper:evt1:1',
+      raidHelperEventId: 'evt1',
+      source: 'raid-helper',
+      raidName: 'Test Raid',
+      startsAt: TODAY.toISOString(),
+      status: 'confirmed',
+      character: { name: 'Thrashclaw', className: 'Druid' },
+      isHorde: false,
+    };
+    const hiddenRaidHelperEvent: RaidEvent = {
+      id: 'raid-helper:evt2:1',
+      raidHelperEventId: 'evt2',
+      source: 'raid-helper',
+      raidName: 'Old Raid',
+      startsAt: TODAY.toISOString(),
+      status: 'confirmed',
+      character: { name: 'Ironhide', className: 'Warrior' },
+      isHorde: false,
+      hidden: true,
+    };
+
+    const { result } = renderHook(() => useCalendarState([visibleRaidHelperEvent, hiddenRaidHelperEvent]));
+    expect(result.current.showHiddenEvents).toBe(false);
+    const idsBefore = result.current.days.flatMap((d) => d.events).map((e) => e.id);
+    expect(idsBefore).toContain('raid-helper:evt1:1');
+    expect(idsBefore).not.toContain('raid-helper:evt2:1');
+
+    act(() => result.current.toggleShowHiddenEvents());
+    expect(result.current.showHiddenEvents).toBe(true);
+    const idsAfter = result.current.days.flatMap((d) => d.events).map((e) => e.id);
+    expect(idsAfter).toContain('raid-helper:evt1:1');
+    expect(idsAfter).toContain('raid-helper:evt2:1');
+  });
+
   it('produces 21 days starting at the anchor', () => {
     const { result } = renderHook(() => useCalendarState([]));
     expect(result.current.days).toHaveLength(21);
@@ -522,6 +558,25 @@ describe('useCalendarState', () => {
       // isHorde applies to every sign-up on the raid; the identity edit does not.
       const other = events.find((e) => e.id === 'raid-helper:evt1:2')!;
       expect(other).toMatchObject({ character: { name: 'Ironhide', className: 'Warrior' }, isHorde: true });
+    });
+
+    it('marking a sign-up Hidden removes it from view, and it reappears when showHiddenEvents is toggled on', async () => {
+      const { result } = renderHook(() => useCalendarState([raidHelperEvent, otherSignUpSameRaid]));
+
+      act(() => result.current.openEditor(raidHelperEvent, { clientX: 10, clientY: 10 }));
+      act(() => result.current.updateComposer({ hidden: true }));
+      await act(async () => result.current.saveComposer());
+
+      expect(mockUpdateRaidHelperEventOverride).toHaveBeenCalledWith('raid-helper:evt1:1', expect.objectContaining({ hidden: true }));
+
+      const idsAfterHide = result.current.days.flatMap((d) => d.events).map((e) => e.id);
+      expect(idsAfterHide).not.toContain('raid-helper:evt1:1');
+      // Hiding one sign-up doesn't affect the other sign-up on the same raid.
+      expect(idsAfterHide).toContain('raid-helper:evt1:2');
+
+      act(() => result.current.toggleShowHiddenEvents());
+      const idsShown = result.current.days.flatMap((d) => d.events).map((e) => e.id);
+      expect(idsShown).toContain('raid-helper:evt1:1');
     });
 
     it('does not offer a Start/End edit — the schedule stays whatever came from raid-helper', () => {
