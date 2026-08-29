@@ -194,7 +194,7 @@
   right: 0;
   top: calc(var(--pad-top) + var(--offset-hours) * var(--px-per-hour));
   height: 1px;
-  background: var(--zp-rule-fade);
+  background: var(--zp-rule-fade-weak);
 }
 
 .nowLine {

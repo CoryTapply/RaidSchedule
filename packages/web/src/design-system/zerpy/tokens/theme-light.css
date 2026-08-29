@@ -33,6 +33,7 @@
   --zp-line-strong: rgba(58,48,112,.26);
   --zp-line-accent: rgba(106,92,184,.58);
   --zp-rule-fade: linear-gradient(90deg, rgba(58,48,112,.04), rgba(58,48,112,.18), rgba(58,48,112,.04)); /* @kind color */
+  --zp-rule-fade-weak: linear-gradient(90deg, rgba(58,48,112,.04), rgba(58,48,112,.07), rgba(58,48,112,.04)); /* @kind color */
 
   --zp-text:   #17142c;
   --zp-text-2: rgba(38,32,74,.80);
