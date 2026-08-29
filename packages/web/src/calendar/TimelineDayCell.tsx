@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 import { layoutDayEvents, type RaidEvent, type RowWindow } from '@raidschedule/shared';
 import type { CalendarDay } from './useCalendarState.js';
 import { EventBlock } from './EventBlock.js';
+import { NowLine } from './NowLine.js';
 import { dayLabel } from './format.js';
 import styles from '../styles/calendar.module.css';
 
@@ -42,6 +43,7 @@ export function TimelineDayCell({
       {hours.map((h) => (
         <div key={h} className={styles.hourLine} style={{ '--offset-hours': h - window.startHour } as CSSProperties} />
       ))}
+      {day.isToday && <NowLine window={window} />}
       <div className={`${styles.dayNumber} ${day.isToday ? styles.dayNumberToday : ''}`}>
         {dayLabel(day.date, day.isFirstOfMonth)}
       </div>

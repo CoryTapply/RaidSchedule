@@ -71,6 +71,8 @@
   --zp-info-line:    rgba(42,104,204,.38);
   --zp-danger-text:  #7d1d24;
   --zp-danger-tint-strong: rgba(193,52,61,.20);
+  --zp-danger-glow:        rgba(193,52,61,.45);
+  --zp-danger-glow-strong: rgba(193,52,61,.6);
 
   --zp-elev-panel:   0 10px 28px rgba(40,32,86,.09), inset 0 1px 0 rgba(255,255,255,.7);
   --zp-elev-overlay: 0 22px 54px rgba(34,26,76,.16), inset 0 1px 0 rgba(255,255,255,.8);

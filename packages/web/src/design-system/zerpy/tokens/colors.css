@@ -93,6 +93,8 @@
   --zp-info-line:    rgba(110,168,254,.40);
   --zp-danger-text:  #ffdfe1;
   --zp-danger-tint-strong: rgba(232,99,107,.26);
+  --zp-danger-glow:        rgba(232,99,107,.45);
+  --zp-danger-glow-strong: rgba(232,99,107,.6);
 
   /* ── Loading ────────────────────────────────────────────── */
   --zp-skeleton: linear-gradient(90deg, rgba(255,255,255,.04) 18%, rgba(255,255,255,.10) 42%, rgba(255,255,255,.04) 66%); /* @kind color */
