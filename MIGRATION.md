@@ -19,7 +19,7 @@ grouped by file (`rg -- '--color-|--space-|--radius-|--shadow-|--font-heading|--
 - [x] `packages/web/src/styles/calendar.module.css` — `var(--space-N)`,
       `var(--font-heading)`, `var(--font-body)` throughout (gaps/padding and
       font-family only; the Nebula pass never routed its literal
-      rgba()/hex colors through Nocturne tokens — see design/README.md).
+      rgba()/hex colors through Nocturne tokens).
       Rewritten wholesale against `--zp-space-*` / `--zp-font-ui` /
       `--zp-font-body` and the rest of the grid spec in the task prompt.
 - [x] `packages/web/src/styles/composer.module.css` — same `--space-N`/
@@ -39,7 +39,7 @@ No other files referenced Nocturne tokens or classes.
 Nocturne isn't Nebula-prefixed, so this is a hand-built table rather than a
 `--nb-` → `--zp-` replace. Nocturne's raw `--color-*`/`--space-*`/`--radius-*`
 tokens were mostly *not* what drove the Nebula-era visual design (that used
-literal rgba()/hex per design/README.md) — the table below is for the few
+literal rgba()/hex colors instead) — the table below is for the few
 places that did reference them (LoginPage, and gap/font shorthand in the
 calendar/composer/dialog/eventCard modules).
 
@@ -70,7 +70,8 @@ context for anything not yet re-derived from the real source.
 
 ### Original state (superseded)
 
-The exported design-system folder (`design/UpdatedClaudeDesign/ClaudeDesignOutput/_ds/zerpy-design-system-.../`)
+The exported design-system folder (a top-level `design/` folder, since removed
+now that `packages/web/src/design-system/zerpy` is the single source of truth)
 did **not** contain the individual component `.tsx` files the manifest and
 readme describe (`components/buttons/Button.tsx`, `components/forms/Field.tsx`,
 etc.) — only `components/controls.css` (the real pseudo-state layer) and a
@@ -82,8 +83,8 @@ So `packages/web/src/design-system/zerpy/` vendored what was actually real
 and copyable — `tokens/*.css`, `components/controls.css`, `styles.css`, the
 accent logo SVG — verbatim, and `components/*.tsx` were hand-built from three
 real sources: `controls.css`'s class contracts, `readme.md`'s stated
-behavior/token usage, and the exact markup in
-`design/UpdatedClaudeDesign/ClaudeDesignOutput/Raid Calendar Zerpy.dc.html`
+behavior/token usage, and the exact markup in the `Raid Calendar Zerpy.dc.html`
+prototype file from that same now-removed `design/` export
 (the actual finished prototype, not just the CSS). Two gaps controls.css
 didn't cover were filled the same way: `SegmentedControl`'s container/
 selected-state and `Badge`'s tones had no controls.css rule, so both were
@@ -163,9 +164,9 @@ call-site changes.
 ## Other fixes made in passing
 
 - `packages/shared/src/classColors.ts` had `Priest: '#FFFFFF'` — every other
-  copy of the canonical class colors (this repo's own `design/README.md`,
-  and the vendored `tokens/wow.css`) has Priest at `#E9E9ED`. Fixed to match;
-  Blizzard's own value, not a design choice.
+  copy of the canonical class colors (including the vendored `tokens/wow.css`)
+  has Priest at `#E9E9ED`. Fixed to match; Blizzard's own value, not a design
+  choice.
 - The app's existing `assets/ZerpyLogo.svg` used the "blurple" alternate
   rail (`#8788EE`) rather than the default accent rail (`#9184d9`) the
   design system's own readme specifies for "all Zerpy.dev sites". Swapped to
