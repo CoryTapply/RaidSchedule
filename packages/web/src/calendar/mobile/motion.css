@@ -1,0 +1,37 @@
+/*
+ * Plain global CSS, not a module — @keyframes referenced by name from CSS Modules'
+ * `animation` shorthand must live outside module scope, mirroring how controls.css's
+ * zp-slide-in is defined globally and referenced from composer.module.css. Import this once,
+ * from MobileCalendarPage.
+ *
+ * Under prefers-reduced-motion, zpm-up is redefined in place (same name, same callers) to
+ * animate opacity instead of transform — sheets still fade in, nothing else moves.
+ */
+@keyframes zpm-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes zpm-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  @keyframes zpm-up {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+}

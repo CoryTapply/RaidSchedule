@@ -1,0 +1,26 @@
+/* position: relative is load-bearing — see scrollTargeting.ts's rowTop comment. Without it,
+   the scroller isn't necessarily each row's offsetParent and rect-based measurement would be
+   the only thing keeping targeting correct; keeping it anyway matches the spec's own framing
+   of this as a required property, not just a nice-to-have. */
+.scroller {
+  position: relative;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  z-index: 5;
+}
+
+/* Load-bearing, not decoration: without ~a viewport of slack below the final day, a day in
+   the last screenful can never be scrolled to the top — both the mount-time "land on today"
+   and the Today button would silently under-shoot. */
+.spacer {
+  min-height: 560px;
+}
+
+.footerHint {
+  margin: 0;
+  padding: 16px 14px 12px;
+  text-align: center;
+  font: var(--zp-text-micro);
+  color: var(--zp-text-4);
+}

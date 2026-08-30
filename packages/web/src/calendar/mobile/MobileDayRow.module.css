@@ -1,0 +1,88 @@
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px 14px 14px;
+  background: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+.rowEmpty {
+  padding: 9px 14px;
+}
+
+.row::after {
+  content: '';
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 0;
+  height: 1px;
+  background: var(--zp-rule-fade);
+}
+
+.rowActiveLockout {
+  background: var(--zp-surface-1);
+}
+
+/* Declared after .rowActiveLockout so today's tint always wins if a day is somehow both. */
+.rowToday {
+  background: var(--zp-accent-tint);
+  box-shadow: inset 0 1px 0 0 var(--zp-line-accent);
+}
+
+.gutter {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.weekday {
+  font: var(--zp-text-micro);
+  text-transform: uppercase;
+  letter-spacing: var(--zp-tracking-micro);
+  color: var(--zp-text-4);
+}
+
+.numeral {
+  font: var(--zp-text-data);
+  font-size: 22px;
+  color: var(--zp-text-2);
+}
+
+.numeralEmpty {
+  font-size: 16px;
+  color: var(--zp-text-4);
+}
+
+/* Declared after .numeralEmpty so today's accent wins even on an empty day. */
+.today {
+  color: var(--zp-accent-300);
+}
+
+.monthTag {
+  font: var(--zp-text-micro);
+  color: var(--zp-text-4);
+}
+
+.content {
+  min-width: 0;
+  display: flex;
+}
+
+.emptyLine {
+  align-self: center;
+  font: var(--zp-text-sm);
+  color: var(--zp-text-4);
+  opacity: 0.7;
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}

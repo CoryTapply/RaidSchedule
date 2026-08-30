@@ -1,0 +1,97 @@
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(6, 6, 14, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  /* animation set inline in the component — see motionStyles.ts for why */
+}
+
+.sheet {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--zp-radius) var(--zp-radius) 0 0;
+  background: var(--zp-surface-overlay);
+  box-shadow: var(--zp-elev-overlay);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  /* animation set inline in the component — see motionStyles.ts for why */
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.rail {
+  flex-shrink: 0;
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font: var(--zp-text-label);
+  font-size: 16px;
+  color: var(--zp-text);
+}
+
+.dateTime {
+  font: var(--zp-text-data);
+  font-size: 12px;
+  color: var(--zp-text-3);
+}
+
+.characterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--zp-line);
+  border-radius: var(--zp-radius);
+  background: var(--zp-surface-1);
+}
+
+.characterRail {
+  flex-shrink: 0;
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+}
+
+.characterInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.characterName {
+  font: var(--zp-text-label);
+  color: var(--zp-text);
+}
+
+.className {
+  font: var(--zp-text-micro);
+  text-transform: uppercase;
+  color: var(--zp-text-4);
+}
+
+.editButton {
+  align-self: flex-start;
+}
