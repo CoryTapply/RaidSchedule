@@ -1,4 +1,4 @@
-import { addDays, dateKey, startOfWeekSunday } from '@raidschedule/shared';
+import { addDays, dateKey, lockoutStart } from '@raidschedule/shared';
 import type { MobileCalendarDay } from './useMobileCalendarState.js';
 import styles from './MobileWeekStrip.module.css';
 
@@ -15,7 +15,7 @@ export interface MobileWeekStripProps {
 
 export function MobileWeekStrip({ days, activeDate, activeDayKey, todayKey, onSelectDay }: MobileWeekStripProps) {
   const dayByKey = new Map(days.map((d) => [d.key, d]));
-  const weekStart = startOfWeekSunday(activeDate);
+  const weekStart = lockoutStart(activeDate);
 
   return (
     <div className={styles.strip}>
