@@ -92,8 +92,9 @@ describe('MobileCalendarPage', () => {
 
     expect(await screen.findByText('Event published')).toBeInTheDocument();
     expect(mockCreateCustomEvent).toHaveBeenCalledWith(expect.objectContaining({ raidName: 'Black Temple' }));
-    // The sheet stays mounted after saving (so it can slide out instead of vanishing) — closed means inert, not gone.
-    expect(screen.getByRole('dialog').closest('[inert]')).not.toBeNull();
+    // Both sheets stay mounted after saving (so either can slide out instead of vanishing) —
+    // closed means inert, not gone. The detail sheet was never opened here, so it's inert too.
+    expect(screen.getAllByRole('dialog').filter((el) => !el.closest('[inert]'))).toHaveLength(0);
   });
 
   it('shows an error banner when the initial fetch fails', async () => {

@@ -8,7 +8,6 @@ import { MobileHeader } from './MobileHeader.js';
 import { MobileToast } from './MobileToast.js';
 import { useMobileCalendarState } from './useMobileCalendarState.js';
 import { useToast } from './useToast.js';
-import './motion.css';
 import styles from './MobileCalendarPage.module.css';
 
 export function MobileCalendarPage() {
@@ -74,7 +73,7 @@ export function MobileCalendarPage() {
         onOpenComposer={state.openComposer}
       />
 
-      {state.selectedEvent && <MobileDetailSheet event={state.selectedEvent} onClose={state.closeDetail} onEdit={state.openEditor} />}
+      <MobileDetailSheet event={state.selectedEvent} onClose={state.closeDetail} onEdit={state.openEditor} />
 
       <MobileComposerSheet
         composer={state.composer}

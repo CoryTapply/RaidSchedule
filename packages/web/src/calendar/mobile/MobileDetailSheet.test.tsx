@@ -62,4 +62,30 @@ describe('MobileDetailSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }));
     expect(onEdit).toHaveBeenCalledWith(event);
   });
+
+  describe('staying mounted across close/reopen (so closing can slide out instead of vanishing)', () => {
+    it('is inert when rendered with event=null', () => {
+      render(<MobileDetailSheet event={null} onClose={vi.fn()} onEdit={vi.fn()} />);
+      expect(screen.getByRole('dialog').closest('[inert]')).not.toBeNull();
+    });
+
+    it('keeps rendering the last event, marked inert, once event goes back to null', () => {
+      const { rerender } = render(<MobileDetailSheet event={makeEvent()} onClose={vi.fn()} onEdit={vi.fn()} />);
+      expect(screen.getByRole('dialog').closest('[inert]')).toBeNull();
+
+      rerender(<MobileDetailSheet event={null} onClose={vi.fn()} onEdit={vi.fn()} />);
+      expect(screen.getByText('Nerub-ar Palace')).toBeInTheDocument();
+      expect(screen.getByRole('dialog').closest('[inert]')).not.toBeNull();
+    });
+
+    it('shows fresh content and clears inert when reopened with a new event', () => {
+      const { rerender } = render(<MobileDetailSheet event={makeEvent({ raidName: 'First' })} onClose={vi.fn()} onEdit={vi.fn()} />);
+      rerender(<MobileDetailSheet event={null} onClose={vi.fn()} onEdit={vi.fn()} />);
+      rerender(<MobileDetailSheet event={makeEvent({ raidName: 'Second' })} onClose={vi.fn()} onEdit={vi.fn()} />);
+
+      expect(screen.queryByText('First')).not.toBeInTheDocument();
+      expect(screen.getByText('Second')).toBeInTheDocument();
+      expect(screen.getByRole('dialog').closest('[inert]')).toBeNull();
+    });
+  });
 });

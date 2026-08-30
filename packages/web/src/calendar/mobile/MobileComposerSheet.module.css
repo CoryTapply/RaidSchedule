@@ -10,7 +10,7 @@
  * drag gesture would fight the open/close transition above if they shared one element.
  */
 .sheetHost {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 9;
   transform: translateY(100%);
