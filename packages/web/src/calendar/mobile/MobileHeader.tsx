@@ -39,7 +39,7 @@ export function MobileHeader({ days, activeDate, activeDayKey, todayKey, onToday
           Today
         </Button>
       </div>
-      <MobileWeekStrip days={days} activeDate={activeDate} activeDayKey={activeDayKey} onSelectDay={onSelectDay} />
+      <MobileWeekStrip days={days} activeDate={activeDate} activeDayKey={activeDayKey} todayKey={todayKey} onSelectDay={onSelectDay} />
     </header>
   );
 }

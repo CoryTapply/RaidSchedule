@@ -50,7 +50,7 @@ describe('useDragToDismiss', () => {
     fireEvent.pointerUp(getByTestId('handle'));
     expect(getByTestId('sheet').style.transform).toBe('translateY(900px)');
     expect(onDismiss).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(200);
+    vi.advanceTimersByTime(280);
     expect(onDismiss).toHaveBeenCalledTimes(1);
   });
 
@@ -61,7 +61,7 @@ describe('useDragToDismiss', () => {
     fireEvent.pointerMove(getByTestId('handle'), { clientY: 200 });
     fireEvent.pointerUp(getByTestId('handle'));
     act(() => {
-      vi.advanceTimersByTime(200);
+      vi.advanceTimersByTime(280);
     });
     expect(getByTestId('sheet').style.transform).toBe('translateY(0px)');
   });
@@ -73,7 +73,7 @@ describe('useDragToDismiss', () => {
     fireEvent.pointerMove(getByTestId('handle'), { clientY: 200 });
     fireEvent.pointerUp(getByTestId('handle'));
     unmount();
-    vi.advanceTimersByTime(200);
+    vi.advanceTimersByTime(280);
     expect(onDismiss).not.toHaveBeenCalled();
   });
 });

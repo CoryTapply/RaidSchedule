@@ -29,13 +29,12 @@
 .initial {
   font: var(--zp-text-micro);
   text-transform: uppercase;
-  color: var(--zp-text-4);
+  white-space: nowrap;
 }
 
 .numeral {
   font: var(--zp-text-data);
   font-size: 14px;
-  color: var(--zp-text-2);
 }
 
 .dot {
