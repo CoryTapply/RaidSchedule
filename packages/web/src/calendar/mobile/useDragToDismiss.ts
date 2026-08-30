@@ -16,7 +16,7 @@ export interface DragToDismissResult {
 }
 
 const DISMISS_TRANSFORM = 900;
-const DISMISS_TRANSITION_MS = 200;
+const DISMISS_TRANSITION_MS = 280;
 
 /** Downward-only drag on a full-screen sheet's header; past `threshold`px it animates off and calls onDismiss. */
 export function useDragToDismiss(onDismiss: () => void, threshold = 90): DragToDismissResult {
@@ -48,7 +48,13 @@ export function useDragToDismiss(onDismiss: () => void, threshold = 90): DragToD
     setDragging(false);
     if (dragY > threshold) {
       setDragY(DISMISS_TRANSFORM);
-      dismissTimer.current = setTimeout(onDismiss, DISMISS_TRANSITION_MS);
+      dismissTimer.current = setTimeout(() => {
+        onDismiss();
+        // Reset for the next open — the sheet stays mounted (see MobileComposerSheet), so
+        // without this the transform would still be sitting at DISMISS_TRANSFORM next time
+        // it's reopened, and it would come back stuck off-screen.
+        setDragY(0);
+      }, DISMISS_TRANSITION_MS);
     } else {
       setDragY(0);
     }

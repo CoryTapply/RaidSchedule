@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useDragToDismiss } from './useDragToDismiss.js';
 
@@ -52,6 +52,18 @@ describe('useDragToDismiss', () => {
     expect(onDismiss).not.toHaveBeenCalled();
     vi.advanceTimersByTime(200);
     expect(onDismiss).toHaveBeenCalledTimes(1);
+  });
+
+  it('resets the transform back to 0 once the dismiss transition completes', () => {
+    const onDismiss = vi.fn();
+    const { getByTestId } = render(<Host onDismiss={onDismiss} />);
+    fireEvent.pointerDown(getByTestId('handle'), { clientY: 100, pointerId: 1 });
+    fireEvent.pointerMove(getByTestId('handle'), { clientY: 200 });
+    fireEvent.pointerUp(getByTestId('handle'));
+    act(() => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(getByTestId('sheet').style.transform).toBe('translateY(0px)');
   });
 
   it('does not call onDismiss again on unmount after a dismiss was already scheduled', () => {
