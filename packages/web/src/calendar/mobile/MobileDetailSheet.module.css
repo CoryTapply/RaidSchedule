@@ -1,0 +1,127 @@
+/*
+ * Stays mounted for the page's whole lifetime once opened, sliding in and back out via these
+ * transitions rather than mount/unmount — an unmounted element can't animate its own exit.
+ * `inert` (set in the component) removes it from tab order and hit-testing while closed;
+ * `pointer-events: none` backs that up in browsers without `inert` support yet.
+ */
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(6, 6, 14, 0.62);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 280ms var(--zp-ease);
+  pointer-events: none;
+}
+
+.scrimOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.sheet {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+  border-radius: var(--zp-radius) var(--zp-radius) 0 0;
+  background: var(--zp-surface-overlay);
+  box-shadow: var(--zp-elev-overlay);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transform: translateY(100%);
+  transition: transform 280ms var(--zp-ease);
+}
+
+.sheetOpen {
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet {
+    transform: none;
+    opacity: 0;
+    transition: opacity 280ms var(--zp-ease);
+  }
+
+  .sheetOpen {
+    opacity: 1;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.rail {
+  flex-shrink: 0;
+  width: 3px;
+  align-self: stretch;
+  border-radius: 2px;
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.title {
+  font: var(--zp-text-label);
+  font-size: 16px;
+  color: var(--zp-text);
+}
+
+.dateTime {
+  font: var(--zp-text-data);
+  font-size: 12px;
+  color: var(--zp-text-3);
+}
+
+.characterRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--zp-line);
+  border-radius: var(--zp-radius);
+  background: var(--zp-surface-1);
+}
+
+.characterRail {
+  flex-shrink: 0;
+  width: 3px;
+  height: 28px;
+  border-radius: 2px;
+}
+
+.characterInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.characterName {
+  font: var(--zp-text-label);
+  color: var(--zp-text);
+}
+
+.className {
+  font: var(--zp-text-micro);
+  text-transform: uppercase;
+  color: var(--zp-text-4);
+}
+
+.editButton {
+  align-self: flex-start;
+}

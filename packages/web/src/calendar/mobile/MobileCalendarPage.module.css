@@ -1,0 +1,40 @@
+/*
+ * isolation: isolate creates a stacking context for the whole surface, so the 0–9 z-index
+ * budget (starfield 0 / content 5 / header 6 / toast 7 / detail scrim 8 / composer sheet 9)
+ * is self-contained regardless of what wraps this page — the spec's own framing of how the
+ * composer once ended up covering the status bar.
+ */
+.root {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--zp-ground);
+  color: var(--zp-text);
+  font-family: var(--zp-font-body);
+}
+
+.starfield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--zp-starfield-opacity);
+  background-image: var(--zp-starfield);
+}
+
+.error {
+  position: absolute;
+  top: 128px;
+  left: 16px;
+  right: 16px;
+  z-index: 6;
+  padding: 8px 12px;
+  border-radius: var(--zp-radius);
+  background: var(--zp-surface-overlay);
+  color: var(--zp-danger-text);
+  font: var(--zp-text-sm);
+}

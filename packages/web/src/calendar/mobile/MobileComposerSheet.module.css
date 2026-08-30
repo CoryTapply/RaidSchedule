@@ -1,0 +1,152 @@
+/*
+ * .sheetHost stays mounted for the composer's whole lifetime once opened, sliding in and back
+ * out via this transition rather than mount/unmount — an unmounted element can't animate its
+ * own exit, which is why Cancel/Save used to make the sheet vanish instantly. `inert` (set in
+ * the component) removes it from tab order and hit-testing while closed; `pointer-events: none`
+ * backs that up in browsers without `inert` support yet.
+ *
+ * `.sheet` is a separate nested element on purpose: it carries the live drag-to-dismiss
+ * transform (from useDragToDismiss), and a running transition on the *same* property as a
+ * drag gesture would fight the open/close transition above if they shared one element.
+ */
+.sheetHost {
+  position: fixed;
+  inset: 0;
+  z-index: 9;
+  transform: translateY(100%);
+  transition: transform 280ms var(--zp-ease);
+  pointer-events: none;
+}
+
+.sheetHostOpen {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheetHost {
+    transform: none;
+    opacity: 0;
+    transition: opacity 280ms var(--zp-ease);
+  }
+
+  .sheetHostOpen {
+    opacity: 1;
+  }
+}
+
+.sheet {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: linear-gradient(180deg, #10111c, #0a0a12);
+}
+
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 56px 14px 12px;
+  background: var(--zp-surface-1);
+  border-bottom: 1px solid var(--zp-line);
+}
+
+.headerCenter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  touch-action: none;
+}
+
+.handle {
+  width: 34px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--zp-line-strong);
+}
+
+.modeLabel {
+  font: var(--zp-text-label);
+  color: var(--zp-text);
+}
+
+.dateLabel {
+  font: var(--zp-text-micro);
+  color: var(--zp-text-4);
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.preview {
+  min-height: 66px;
+}
+
+.timeRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.timeWell {
+  display: flex;
+  align-items: center;
+  min-height: var(--zp-control-h);
+  padding: 0 10px;
+  border: 1px solid var(--zp-line);
+  border-radius: var(--zp-radius);
+  background: var(--zp-surface-1);
+  font: var(--zp-text-data);
+  color: var(--zp-text-3);
+}
+
+.swatchRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.classSwatch {
+  flex-shrink: 0;
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+}
+
+.factionSwatch {
+  flex-shrink: 0;
+  width: 3px;
+  height: 22px;
+  border-radius: 2px;
+}
+
+.swatchField {
+  flex: 1;
+  min-width: 0;
+}
+
+.saveError {
+  font: var(--zp-text-sm);
+  color: var(--zp-danger-text);
+}
+
+.footerNote {
+  margin: 0;
+  font: var(--zp-text-micro);
+  color: var(--zp-text-4);
+}
+
+.deleteButton {
+  width: 100%;
+}

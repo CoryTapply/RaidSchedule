@@ -29,6 +29,11 @@ export function timeLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
 
+/** "8:00 PM – 11:00 PM", or just the start time when there's no end. */
+export function timeRangeLabel(startIso: string, endIso?: string): string {
+  return endIso ? `${timeLabel(startIso)} – ${timeLabel(endIso)}` : timeLabel(startIso);
+}
+
 /** Gutter/hour-line label for an hour-of-day that may run past 23 (rows can extend past midnight): "5 PM", "12 AM". */
 export function hourLabel(hour: number): string {
   const h = ((hour % 24) + 24) % 24;

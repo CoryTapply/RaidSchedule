@@ -1,0 +1,50 @@
+.strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  padding: 10px 16px 12px;
+  border-bottom: 1px solid var(--zp-rule-fade);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 0;
+  border: 1px solid transparent;
+  border-radius: var(--zp-radius);
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.cellActive {
+  background: var(--zp-accent-tint);
+  border-color: var(--zp-line-accent);
+  box-shadow: 0 0 12px rgba(145, 132, 217, 0.22);
+}
+
+.initial {
+  font: var(--zp-text-micro);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.numeral {
+  font: var(--zp-text-data);
+  font-size: 14px;
+}
+
+.dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.dotActive {
+  background: var(--zp-accent-400);
+  box-shadow: 0 0 6px var(--zp-accent-400);
+}

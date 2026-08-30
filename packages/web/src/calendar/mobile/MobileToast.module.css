@@ -1,0 +1,26 @@
+/*
+ * Centering lives on this wrapper via flexbox, not transform: translateX(-50%) — the
+ * zp-slide-in keyframe animates `transform` too (a 6px translateY), and animating transform
+ * on the same element as a static translateX would fight it for the animation's duration.
+ */
+.layer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 44px;
+  z-index: 7;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  padding: 10px 16px;
+  border-radius: var(--zp-radius);
+  background: var(--zp-surface-overlay);
+  box-shadow: var(--zp-elev-overlay);
+  color: var(--zp-text);
+  font: var(--zp-text-sm);
+  white-space: nowrap;
+  /* animation set inline in the component — see motionStyles.ts for why */
+}
