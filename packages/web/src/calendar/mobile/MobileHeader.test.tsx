@@ -76,13 +76,13 @@ describe('MobileHeader', () => {
 });
 
 describe('MobileWeekStrip', () => {
-  it('renders 7 cells for the Sunday-based week containing the active date', () => {
+  it('renders 7 cells for the lockout week (Tuesday-Monday) containing the active date', () => {
     const activeDate = new Date(2026, 7, 25); // Tuesday
     render(<MobileWeekStrip days={[]} activeDate={activeDate} activeDayKey={dateKey(activeDate)} todayKey="2026-01-01" onSelectDay={vi.fn()} />);
     expect(screen.getAllByRole('button')).toHaveLength(7);
-    // Sunday-based week containing Aug 25 starts Aug 23.
-    expect(screen.getByText('23')).toBeInTheDocument();
-    expect(screen.getByText('29')).toBeInTheDocument();
+    // Lockout week containing Aug 25 (a Tuesday) starts Aug 25 and runs through Aug 31.
+    expect(screen.getByText('25')).toBeInTheDocument();
+    expect(screen.getByText('31')).toBeInTheDocument();
   });
 
   it('marks the active cell', () => {
@@ -94,7 +94,7 @@ describe('MobileWeekStrip', () => {
 
   it('shows a density dot only for days with events', () => {
     const activeDate = new Date(2026, 7, 25);
-    const withEvents = makeDay(new Date(2026, 7, 24), eventStub);
+    const withEvents = makeDay(new Date(2026, 7, 26), eventStub);
     const empty = makeDay(new Date(2026, 7, 25), []);
     render(
       <MobileWeekStrip
@@ -106,7 +106,7 @@ describe('MobileWeekStrip', () => {
       />,
     );
 
-    const dottedCell = screen.getByText('24').closest('button')!;
+    const dottedCell = screen.getByText('26').closest('button')!;
     const dot = dottedCell.querySelector('span:last-child')!;
     expect(dot.className).toMatch(/dotActive/);
 
@@ -119,8 +119,8 @@ describe('MobileWeekStrip', () => {
     const activeDate = new Date(2026, 7, 25);
     const onSelectDay = vi.fn();
     render(<MobileWeekStrip days={[]} activeDate={activeDate} activeDayKey={dateKey(activeDate)} todayKey="2026-01-01" onSelectDay={onSelectDay} />);
-    fireEvent.click(screen.getByText('23').closest('button')!);
-    expect(onSelectDay).toHaveBeenCalledWith('2026-08-23');
+    fireEvent.click(screen.getByText('31').closest('button')!);
+    expect(onSelectDay).toHaveBeenCalledWith('2026-08-31');
   });
 
   it('replaces the weekday letter with "Today" and bolds the numeral for today\'s cell only', () => {
@@ -130,12 +130,12 @@ describe('MobileWeekStrip', () => {
         days={[]}
         activeDate={activeDate}
         activeDayKey={dateKey(activeDate)}
-        todayKey="2026-08-24"
+        todayKey="2026-08-26"
         onSelectDay={vi.fn()}
       />,
     );
 
-    const todayCell = screen.getByText('24').closest('button')!;
+    const todayCell = screen.getByText('26').closest('button')!;
     const todayLabel = todayCell.querySelector('span:first-child') as HTMLElement;
     expect(screen.getByText('Today')).toBe(todayLabel);
     expect(todayLabel.style.letterSpacing).toBe('0.01em');
