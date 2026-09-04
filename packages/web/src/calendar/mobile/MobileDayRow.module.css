@@ -73,11 +73,39 @@
   display: flex;
 }
 
-.emptyLine {
-  align-self: center;
-  font: var(--zp-text-sm);
+.emptyAdd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px dashed var(--zp-line);
+  border-radius: var(--zp-radius);
+  background: transparent;
   color: var(--zp-text-4);
-  opacity: 0.7;
+  font: var(--zp-text-sm);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 100ms var(--zp-ease), opacity 100ms var(--zp-ease), border-color 150ms var(--zp-ease);
+}
+
+.emptyAdd:active {
+  transform: scale(0.98);
+  opacity: 0.75;
+  border-color: var(--zp-line-accent);
+}
+
+.emptyAddPlus {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  color: var(--zp-text-3);
 }
 
 .cards {

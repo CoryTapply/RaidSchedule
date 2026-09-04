@@ -26,7 +26,6 @@
   background: var(--zp-accent-tint);
   box-shadow: var(--zp-accent-glow);
 }
-.zp-primary:hover:not(:disabled) { background: var(--zp-accent-tint-strong); }
 .zp-primary:active:not(:disabled) { background: var(--zp-accent-800); }
 
 .zp-secondary {
@@ -34,17 +33,14 @@
   border: 1px solid var(--zp-line-strong);
   background: var(--zp-surface-1);
 }
-.zp-secondary:hover:not(:disabled) { color: var(--zp-text); border-color: var(--zp-line-accent); background: var(--zp-surface-2); }
 
 .zp-ghost { padding: 0 12px; color: var(--zp-text-3); border: 1px solid transparent; background: transparent; }
-.zp-ghost:hover:not(:disabled) { color: var(--zp-text); background: var(--zp-surface-2); }
 
 .zp-danger {
   color: var(--zp-danger-text);
   border: 1px solid var(--zp-danger-line);
   background: var(--zp-danger-tint);
 }
-.zp-danger:hover:not(:disabled) { background: var(--zp-danger-tint-strong); }
 
 .zp-icon {
   width: var(--zp-control-h); padding: 0;
@@ -52,7 +48,16 @@
   border: 1px solid var(--zp-line-strong);
   background: var(--zp-surface-1);
 }
-.zp-icon:hover:not(:disabled) { color: var(--zp-text); border-color: var(--zp-line-accent); }
+
+/* Hover only for input devices that actually have it — otherwise iOS Safari applies :hover on
+   tap and leaves it stuck until the user taps elsewhere. */
+@media (hover: hover) and (pointer: fine) {
+  .zp-primary:hover:not(:disabled) { background: var(--zp-accent-tint-strong); }
+  .zp-secondary:hover:not(:disabled) { color: var(--zp-text); border-color: var(--zp-line-accent); background: var(--zp-surface-2); }
+  .zp-ghost:hover:not(:disabled) { color: var(--zp-text); background: var(--zp-surface-2); }
+  .zp-danger:hover:not(:disabled) { background: var(--zp-danger-tint-strong); }
+  .zp-icon:hover:not(:disabled) { color: var(--zp-text); border-color: var(--zp-line-accent); }
+}
 
 .zp-sm { height: var(--zp-control-h-sm); padding: 0 12px; font: 500 11.5px/1 var(--zp-font-ui); }
 .zp-sm.zp-icon { width: var(--zp-control-h-sm); padding: 0; }
@@ -69,15 +74,18 @@
   cursor: pointer; overflow: hidden;
   transition: color var(--zp-dur-slow) var(--zp-ease), background var(--zp-dur-slow) var(--zp-ease), transform var(--zp-dur-slow) var(--zp-ease);
 }
-.zp-cta:hover { background: var(--zp-accent-tint-strong); transform: translateY(-1px); }
 .zp-cta:active { transform: translateY(0); }
 .zp-cta:focus-visible { outline: none; border-color: var(--zp-focus-line); box-shadow: var(--zp-focus-shadow); }
 
 .zp-cta-pulse { animation: zp-breathe 4.5s var(--zp-ease) infinite; }
-.zp-cta-pulse:hover { box-shadow: var(--zp-accent-glow-strong); animation-play-state: paused; }
 
 .zp-cta-orbit { border-color: transparent; background: transparent; padding: 0; box-shadow: var(--zp-accent-glow); }
-.zp-cta-orbit:hover { box-shadow: var(--zp-accent-glow-strong); }
+
+@media (hover: hover) and (pointer: fine) {
+  .zp-cta:hover { background: var(--zp-accent-tint-strong); transform: translateY(-1px); }
+  .zp-cta-pulse:hover { box-shadow: var(--zp-accent-glow-strong); animation-play-state: paused; }
+  .zp-cta-orbit:hover { box-shadow: var(--zp-accent-glow-strong); }
+}
 .zp-cta-orbit > .zp-ring {
   position: absolute; inset: -140%;
   background: conic-gradient(from 0deg, transparent 0deg, transparent 250deg, var(--zp-accent-tint-strong) 285deg, var(--zp-accent) 330deg, var(--zp-accent-tint-strong) 358deg, transparent 360deg);
@@ -101,7 +109,9 @@
   backdrop-filter: blur(var(--zp-blur-sm));
   transition: border-color var(--zp-dur) var(--zp-ease), background var(--zp-dur) var(--zp-ease);
 }
-.zp-in:hover:not(:disabled) { border-color: var(--zp-line-accent); }
+@media (hover: hover) and (pointer: fine) {
+  .zp-in:hover:not(:disabled) { border-color: var(--zp-line-accent); }
+}
 .zp-in:focus-visible {
   outline: none; border-color: var(--zp-line-accent);
   box-shadow: 0 0 0 1px var(--zp-line-accent), var(--zp-accent-glow);
