@@ -27,9 +27,11 @@
 
 /* iOS Safari zooms the viewport on focus of any input/select below 16px and doesn't zoom back
    out — .zp-in is shared with desktop's 14px inputs, so the floor is scoped here instead of on
-   the token itself. */
+   the token itself. !important is required because TimeSelect sets `font` (which includes
+   font-size) as an inline style on its <input> — inline styles beat any stylesheet rule
+   regardless of specificity, so without it the time pickers alone kept zooming. */
 .root :global(.zp-in) {
-  font-size: max(16px, 1em);
+  font-size: max(16px, 1em) !important;
 }
 
 .starfield {
