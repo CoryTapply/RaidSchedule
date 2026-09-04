@@ -1,4 +1,5 @@
 import type { RaidEvent } from '@raidschedule/shared';
+import type { MouseEvent } from 'react';
 import { weekdayLabels } from '../format.js';
 import { MobileEventCard } from './MobileEventCard.js';
 import { MONTH_SHORT } from './monthNames.js';
@@ -30,6 +31,13 @@ export function MobileDayRow({ day, isActiveLockout, onSelectEvent, onOpenCompos
     .filter(Boolean)
     .join(' ');
 
+  function handleAddClick(e: MouseEvent) {
+    // The row itself also carries the long-press-to-add handlers — stop the tap from also
+    // starting (and then cancelling) that timer.
+    e.stopPropagation();
+    onOpenComposer(day);
+  }
+
   return (
     <div ref={rowRef} className={rowClassName} data-testid={`day-row-${day.key}`} {...longPress}>
       <div className={styles.gutter}>
@@ -41,7 +49,12 @@ export function MobileDayRow({ day, isActiveLockout, onSelectEvent, onOpenCompos
       </div>
       <div className={styles.content}>
         {isEmpty ? (
-          <span className={styles.emptyLine}>{day.isToday ? 'No raids today — hold to add' : 'No raids'}</span>
+          <button type="button" className={styles.emptyAdd} onClick={handleAddClick}>
+            <span className={styles.emptyAddPlus} aria-hidden="true">
+              +
+            </span>
+            <span>{day.isToday ? 'No raids today — add one' : 'No raids — add one'}</span>
+          </button>
         ) : (
           <div className={styles.cards}>
             {day.events.map((event) => (

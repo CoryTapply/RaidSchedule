@@ -7,7 +7,7 @@ import {
   type RaidEvent,
   type RosterStatus,
 } from '@raidschedule/shared';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createCustomEvent, deleteCustomEvent, updateCustomEvent, updateRaidHelperEventOverride } from '../../api/eventsClient.js';
 import { getStoredClass, localDateTimeToIso, setStoredClass, toLocalHHMM } from '../composer.js';
 import { composerDateLabel, timeRangeLabel } from '../format.js';
@@ -220,6 +220,42 @@ export function useMobileCalendarState(events: RaidEvent[], spanDays = 28): Mobi
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
+  }, [composer, selectedEvent]);
+
+  // iOS back-swipe is how users expect to dismiss a sheet — without this it navigates away
+  // from the app instead. Push one history entry while either overlay is open (switching
+  // straight from detail to editor doesn't push a second one, since `isOpen` stays true across
+  // that transition) and pop it again once closed by any other means (Cancel/Save/tap-outside/
+  // drag/Escape), so a single back-swipe or back-button press always closes exactly one layer.
+  const pushedHistoryRef = useRef(false);
+  const closedViaPopStateRef = useRef(false);
+
+  useEffect(() => {
+    function onPopState() {
+      closedViaPopStateRef.current = true;
+      pushedHistoryRef.current = false;
+      if (composer) setComposer(null);
+      else if (selectedEvent) setSelectedEvent(null);
+    }
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [composer, selectedEvent]);
+
+  useEffect(() => {
+    const isOpen = composer !== null || selectedEvent !== null;
+    if (isOpen && !pushedHistoryRef.current) {
+      window.history.pushState({ mobileOverlay: true }, '');
+      pushedHistoryRef.current = true;
+      return;
+    }
+    if (!isOpen && pushedHistoryRef.current) {
+      pushedHistoryRef.current = false;
+      if (closedViaPopStateRef.current) {
+        closedViaPopStateRef.current = false;
+      } else {
+        window.history.back();
+      }
+    }
   }, [composer, selectedEvent]);
 
   const days = useMemo(() => {

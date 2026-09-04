@@ -7,7 +7,7 @@
   position: fixed;
   left: 0;
   right: 0;
-  bottom: 44px;
+  bottom: max(44px, calc(env(safe-area-inset-bottom, 0px) + 24px));
   z-index: 7;
   display: flex;
   justify-content: center;

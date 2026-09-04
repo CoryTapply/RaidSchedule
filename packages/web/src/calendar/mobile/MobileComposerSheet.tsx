@@ -57,9 +57,7 @@ function labelToStatus(label: string): MobileComposerState['status'] {
 
 export function MobileComposerSheet({ composer, onChange, onStartChange, onCancel, onSave, onDelete }: MobileComposerSheetProps) {
   const { style: dragStyle, handleProps } = useDragToDismiss(onCancel);
-  // Input isn't a forwardRef component, so this refs the wrapper div and queries into it —
-  // simplest way to reach the underlying <input> without hand-editing the vendored component.
-  const titleFieldRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Remembers the last non-null draft so the sheet keeps rendering real content while it
   // slides out after `composer` goes back to null — an unmounted sheet can't animate its own
@@ -74,11 +72,11 @@ export function MobileComposerSheet({ composer, onChange, onStartChange, onCance
   }
   const isOpen = composer !== null;
 
-  // The native `autofocus` attribute only gets one chance to fire, at first insertion into
-  // the document — which now happens once, inert, at page load. Focus the title explicitly
-  // on every real open instead.
+  // Never autofocus a field on open — that forces the keyboard up immediately, which shrinks
+  // the visual viewport and can trigger the iOS input-zoom bug. Focus the dialog container
+  // itself instead (tabIndex={-1} below) and let the user tap the field they want.
   useEffect(() => {
-    if (isOpen) titleFieldRef.current?.querySelector('input')?.focus();
+    if (isOpen) dialogRef.current?.focus();
   }, [isOpen]);
 
   const canSave = active.title.trim().length > 0 && !active.saving;
@@ -94,7 +92,7 @@ export function MobileComposerSheet({ composer, onChange, onStartChange, onCance
 
   return (
     <div className={`${styles.sheetHost} ${isOpen ? styles.sheetHostOpen : ''}`} inert={!isOpen}>
-      <div className={styles.sheet} style={dragStyle} role="dialog" aria-modal="true">
+      <div ref={dialogRef} className={styles.sheet} style={dragStyle} role="dialog" aria-modal="true" tabIndex={-1}>
         <div className={styles.header}>
           <Button intent="ghost" size="sm" onClick={onCancel}>
             Cancel
@@ -121,16 +119,16 @@ export function MobileComposerSheet({ composer, onChange, onStartChange, onCance
             </div>
           </div>
 
-          <div ref={titleFieldRef}>
-            <Field label="Title" hint="Shown on the calendar block.">
-              <Input
-                aria-label="Title"
-                placeholder="Black Temple"
-                value={active.title}
-                onChange={(e) => onChange({ title: e.target.value })}
-              />
-            </Field>
-          </div>
+          <Field label="Title" hint="Shown on the calendar block.">
+            <Input
+              aria-label="Title"
+              placeholder="Black Temple"
+              enterKeyHint="next"
+              autoCapitalize="words"
+              value={active.title}
+              onChange={(e) => onChange({ title: e.target.value })}
+            />
+          </Field>
 
           {timeEditable ? (
             <div className={styles.timeRow}>
@@ -167,6 +165,10 @@ export function MobileComposerSheet({ composer, onChange, onStartChange, onCance
             <Input
               aria-label="Character"
               placeholder="Character name"
+              enterKeyHint="done"
+              autoCapitalize="words"
+              autoCorrect="off"
+              spellCheck={false}
               value={active.character}
               onChange={(e) => onChange({ character: e.target.value })}
             />

@@ -4,7 +4,7 @@
   /* Between content (5) and toast (7) in the plan's z-index budget — stays above scrolling
      day rows without competing with the toast/scrim/sheet layers above it. */
   z-index: 6;
-  padding-top: 56px;
+  padding-top: max(56px, calc(env(safe-area-inset-top, 0px) + 12px));
   background: linear-gradient(180deg, rgba(13, 14, 24, 0.94), rgba(13, 14, 24, 0));
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);

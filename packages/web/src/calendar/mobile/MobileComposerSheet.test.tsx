@@ -178,10 +178,11 @@ describe('MobileComposerSheet', () => {
       expect(screen.getByRole('dialog').closest('[inert]')).not.toBeNull();
     });
 
-    it('focuses the title field on a real open — autofocus alone would only fire once, while pre-mounted and inert', () => {
+    it('focuses the dialog container (not a field) on a real open — autofocusing a field would force the keyboard up and can trigger the iOS zoom bug', () => {
       const { rerender } = render(
         <MobileComposerSheet composer={null} onChange={vi.fn()} onStartChange={vi.fn()} onCancel={vi.fn()} onSave={vi.fn()} onDelete={vi.fn()} />,
       );
+      expect(screen.getByRole('dialog')).not.toHaveFocus();
       expect(screen.getByLabelText('Title')).not.toHaveFocus();
 
       rerender(
@@ -194,7 +195,8 @@ describe('MobileComposerSheet', () => {
           onDelete={vi.fn()}
         />,
       );
-      expect(screen.getByLabelText('Title')).toHaveFocus();
+      expect(screen.getByRole('dialog')).toHaveFocus();
+      expect(screen.getByLabelText('Title')).not.toHaveFocus();
     });
 
     it('keeps rendering the last draft, marked inert, once composer goes back to null', () => {

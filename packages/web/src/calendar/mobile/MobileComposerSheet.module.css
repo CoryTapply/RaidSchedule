@@ -40,6 +40,7 @@
   flex-direction: column;
   height: 100%;
   background: linear-gradient(180deg, #10111c, #0a0a12);
+  outline: none;
 }
 
 .header {
@@ -48,7 +49,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 56px 14px 12px;
+  padding: max(56px, calc(env(safe-area-inset-top, 0px) + 12px)) 14px 12px;
   background: var(--zp-surface-1);
   border-bottom: 1px solid var(--zp-line);
 }
@@ -83,10 +84,11 @@
 .body {
   flex: 1;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  padding: 16px;
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
 }
 
 .preview {

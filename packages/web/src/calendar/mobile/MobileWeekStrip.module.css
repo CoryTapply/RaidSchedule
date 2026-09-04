@@ -10,7 +10,9 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 4px;
+  min-height: 44px;
   padding: 6px 0;
   border: 1px solid transparent;
   border-radius: var(--zp-radius);
@@ -18,6 +20,13 @@
   cursor: pointer;
   font: inherit;
   color: inherit;
+  touch-action: manipulation;
+  transition: transform 100ms var(--zp-ease), opacity 100ms var(--zp-ease);
+}
+
+.cell:active {
+  transform: scale(0.96);
+  opacity: 0.85;
 }
 
 .cellActive {

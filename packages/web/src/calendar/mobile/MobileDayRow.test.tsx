@@ -38,14 +38,22 @@ afterEach(() => {
 });
 
 describe('MobileDayRow', () => {
-  it('renders "No raids" for an empty day that is not today', () => {
+  it('renders a tappable add affordance for an empty day that is not today', () => {
     render(<MobileDayRow day={makeDay()} isActiveLockout={false} onSelectEvent={vi.fn()} onOpenComposer={vi.fn()} rowRef={vi.fn()} />);
-    expect(screen.getByText('No raids')).toBeInTheDocument();
+    expect(screen.getByText('No raids — add one')).toBeInTheDocument();
   });
 
-  it('renders the hold-to-add hint for an empty today', () => {
+  it('renders the today-specific add affordance for an empty today', () => {
     render(<MobileDayRow day={makeDay({ isToday: true })} isActiveLockout={false} onSelectEvent={vi.fn()} onOpenComposer={vi.fn()} rowRef={vi.fn()} />);
-    expect(screen.getByText('No raids today — hold to add')).toBeInTheDocument();
+    expect(screen.getByText('No raids today — add one')).toBeInTheDocument();
+  });
+
+  it('calls onOpenComposer when the empty-day add affordance is tapped', () => {
+    const onOpenComposer = vi.fn();
+    const day = makeDay();
+    render(<MobileDayRow day={day} isActiveLockout={false} onSelectEvent={vi.fn()} onOpenComposer={onOpenComposer} rowRef={vi.fn()} />);
+    fireEvent.click(screen.getByText('No raids — add one'));
+    expect(onOpenComposer).toHaveBeenCalledWith(day);
   });
 
   it('renders event cards for a populated day', () => {

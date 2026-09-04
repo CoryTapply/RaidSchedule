@@ -15,6 +15,21 @@
   background: var(--zp-ground);
   color: var(--zp-text);
   font-family: var(--zp-font-body);
+  /*
+   * Touch-target and input-zoom fixes from the mobile interaction guideline, scoped to this
+   * subtree only (never reaches desktop's CalendarPage, which mounts under a different root) —
+   * see CLAUDE.md's mobile plan. Raising --zp-control-h and --zp-control-h-sm to 44px is the
+   * shared design system's 30/38px floor bumped to Apple HIG / WCAG 2.5.5's touch minimum.
+   */
+  --zp-control-h-sm: 44px;
+  --zp-control-h: 44px;
+}
+
+/* iOS Safari zooms the viewport on focus of any input/select below 16px and doesn't zoom back
+   out — .zp-in is shared with desktop's 14px inputs, so the floor is scoped here instead of on
+   the token itself. */
+.root :global(.zp-in) {
+  font-size: max(16px, 1em);
 }
 
 .starfield {
